@@ -1,6 +1,9 @@
+package com.example.finalandroidapplication.viewmodel
+
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
@@ -12,47 +15,28 @@ class PostViewModel : ViewModel() {
     val isPosted: LiveData<Boolean> get() = _isPosted
 
     fun uploadPost(
-        post: String,
-        imageUri: String?,
-        userId: String,
-        context: Context
+        postDes: String,
+        userId: String
     ) {
         val postId = UUID.randomUUID().toString()
         val timestamp = System.currentTimeMillis().toString()
-        savePostToLocal(postId, post, imageUri, userId, timestamp, context)
 
         val postData = mapOf(
             "postId" to postId,
-            "postDes" to post,
+            "postDes" to postDes,
             "userId" to userId,
             "timestamp" to timestamp,
-            "imageUri" to (imageUri ?: "")
         )
 
         firestore.collection("posts").document(postId)
             .set(postData)
             .addOnSuccessListener {
+                Log.d("PostViewModel", "Post uploaded successfully")
                 _isPosted.postValue(true)
             }
             .addOnFailureListener { exception ->
+                Log.e("PostViewModel", "Error uploading post: ${exception.message}")
                 _isPosted.postValue(false)
             }
     }
-
-    private fun savePostToLocal(
-        postId: String,
-        post: String,
-        imageUri: String?,
-        userId: String,
-        timestamp: String,
-        context: Context
-    ) {
-        val sharedPreferences = context.getSharedPreferences("LocalPosts", Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-        editor.putString(postId, "$post|$imageUri|$userId|$timestamp")
-        editor.apply()
-    }
-
-
-
 }

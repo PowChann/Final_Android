@@ -1,7 +1,5 @@
 package com.example.finalandroidapplication.screens
 
-import PostViewModel
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,14 +28,17 @@ import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.model.PostItem
 import com.example.finalandroidapplication.navigation.Routes
 import com.example.finalandroidapplication.viewmodel.HomeViewModel
-import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FindHouse(navController: NavHostController) {
-    val context = LocalContext.current
     val homeViewModel: HomeViewModel = viewModel()
-    val postsAndUsers by homeViewModel.postsAndUsers.observeAsState(null)
+    val postsAndUsers by homeViewModel.postsAndUsers.observeAsState(emptyList())
+
+    LaunchedEffect(Unit) {
+        homeViewModel.fetchPostsAndUsers()
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -71,14 +71,10 @@ fun FindHouse(navController: NavHostController) {
         },
         content = { padding ->
             LazyColumn(modifier = Modifier.padding(padding)) {
-                items(postsAndUsers?: emptyList()){
-                    pairs ->
-                    PostItem(post = pairs.first,
-                        users = pairs.second,
-                        navController)
+                items(postsAndUsers) { (post, user) ->
+                    PostItem(post, user, navController)
                 }
             }
-
         }
     )
 }

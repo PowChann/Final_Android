@@ -1,8 +1,6 @@
 package com.example.finalandroidapplication.navigation
 
-import PostViewModel
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,7 +49,7 @@ fun NavGraph(navController: NavHostController) {
             Register(navController)
         }
         composable(Routes.AddPost.routes) {
-            val uid = auth.currentUser?.uid ?: ""
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
             AddPost(navController, uid)
         }
     }

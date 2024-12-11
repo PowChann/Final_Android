@@ -1,8 +1,5 @@
 package com.example.finalandroidapplication.screens
 
-
-import ProfileViewModel
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -46,6 +43,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.navigation.Routes
+import com.example.finalandroidapplication.viewmodel.AuthViewModel
+import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)

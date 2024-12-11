@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.navigation.Routes
+import com.example.finalandroidapplication.viewmodel.AuthViewModel
 
 @Composable
 fun Login(navController: NavHostController) {

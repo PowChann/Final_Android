@@ -1,4 +1,4 @@
-package com.example.finalandroidapplication.screens
+package com.example.finalandroidapplication.viewmodel
 
 import android.content.Context
 import android.widget.Toast
@@ -13,8 +13,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 class AuthViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
-
-
     private val _firebaseUser = MutableLiveData<FirebaseUser?>()
     val firebaseUser: LiveData<FirebaseUser?> = _firebaseUser
 
@@ -100,7 +98,6 @@ class AuthViewModel : ViewModel() {
         auth.signOut()
         _firebaseUser.postValue(null)
     }
-
 }
 
 

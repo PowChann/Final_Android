@@ -1,116 +1,57 @@
 package com.example.finalandroidapplication.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.finalandroidapplication.model.PostModel
 import com.example.finalandroidapplication.model.UserModel
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-
-//class HomeViewModel: ViewModel() {
-//    private val db = FirebaseDatabase.getInstance()
-//    val post = db.getReference("posts")
-//
-//    private val _postsAndUsers = MutableLiveData<List<Pair<PostModel, UserModel>>>()
-//    val postsAndUsers: LiveData<List<Pair<PostModel, UserModel>>> = _postsAndUsers
-//
-//    init {
-//        fetchPostsAndUsers {
-//            _postsAndUsers.value = it
-//        }
-//    }
-//    private fun fetchPostsAndUsers(onResult: (List<Pair<PostModel, UserModel>>) -> Unit) {
-//        post.addValueEventListener(object : ValueEventListener {
-//            override fun onDataChange(snapshot: DataSnapshot) {
-//                val result = mutableListOf<Pair<PostModel, UserModel>>()
-//                for (postSnapshot in snapshot.children) {
-//                    val post = postSnapshot.getValue(PostModel::class.java)
-//                    post.let {
-//                        fetchUserFromPost(it!!){
-//                            user -> result.add(0,it to user)
-//                            _postsAndUsers.value = result
-//                            if(result.size == snapshot.childrenCount.toInt()){
-//                                onResult(result)
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//
-//            override fun onCancelled(error: DatabaseError) {
-//                TODO("Not yet implemented")
-//            }
-//        })
-//    }
-//
-//    fun fetchUserFromPost(post: PostModel, onResult:(UserModel)-> Unit){
-//        db.getReference("users").child(post.userId)
-//            .addListenerForSingleValueEvent(object : ValueEventListener{
-//                override fun onDataChange(snapshot: DataSnapshot) {
-//                    val user = snapshot.getValue(UserModel::class.java)
-//                    user?.let {
-//
-//                    }
-//            }
-//                override fun onCancelled(error: DatabaseError) {
-//                    TODO("Not yet implemented")
-//                }
-//        })
-//    }
-//}
-
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 class HomeViewModel : ViewModel() {
-    private val db = FirebaseFirestore.getInstance()
-
+    private val firestore = FirebaseFirestore.getInstance()
     private val _postsAndUsers = MutableLiveData<List<Pair<PostModel, UserModel>>>()
     val postsAndUsers: LiveData<List<Pair<PostModel, UserModel>>> = _postsAndUsers
 
-    init {
-        fetchPostsAndUsers { result ->
-            _postsAndUsers.value = result
-        }
-    }
-
-    private fun fetchPostsAndUsers(onResult: (List<Pair<PostModel, UserModel>>) -> Unit) {
-        db.collection("posts").get().addOnSuccessListener { snapshot ->
-            val result = mutableListOf<Pair<PostModel, UserModel>>()
-            val posts = snapshot.toObjects(PostModel::class.java)
-                .sortedByDescending { it.timestamp.toLongOrNull() }
-
-            if (posts.isNotEmpty()) {
-                for (post in posts) {
-                    fetchUserFromPost(post) { user ->
-                        result.add(post to user)
-                        _postsAndUsers.value = result
-                        if (result.size == posts.size) {
-                            onResult(result)
+    fun fetchPostsAndUsers() {
+        firestore.collection("posts")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { postsSnapshot ->
+                val posts = postsSnapshot.toObjects(PostModel::class.java)
+                fetchUsersForPosts(posts) { usersMap ->
+                    val result = posts.mapNotNull { post ->
+                        usersMap[post.userId]?.let { user ->
+                            Pair(post, user)
                         }
                     }
+                    _postsAndUsers.value = result
                 }
-            } else {
-                onResult(emptyList())
             }
-        }.addOnFailureListener {
-            onResult(emptyList())
-        }
+            .addOnFailureListener { error ->
+                Log.e("HomeViewModel", "Error fetching posts: ${error.message}")
+            }
     }
 
-    private fun fetchUserFromPost(post: PostModel, onResult: (UserModel) -> Unit) {
-        db.collection("users").document(post.userId)
+    private fun fetchUsersForPosts(
+        posts: List<PostModel>,
+        onComplete: (Map<String, UserModel>) -> Unit
+    ) {
+        val userIds = posts.map { it.userId }.distinct()
+        firestore.collection("users")
+            .whereIn("uid", userIds)
             .get()
             .addOnSuccessListener { snapshot ->
-                val user = snapshot.toObject(UserModel::class.java)
-                if (user != null) {
-                    onResult(user)
-                }
+                val usersMap = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(UserModel::class.java)?.let { it.uid to it }
+                }.toMap()
+
+                onComplete(usersMap)
             }
-            .addOnFailureListener {
-                // Handle error
+            .addOnFailureListener { error ->
+                Log.e("HomeViewModel", "Error fetching users: ${error.message}")
+                onComplete(emptyMap())
             }
     }
 }
