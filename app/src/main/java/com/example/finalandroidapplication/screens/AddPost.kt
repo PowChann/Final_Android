@@ -31,7 +31,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,7 +47,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.R
-import com.example.finalandroidapplication.navigation.Routes
 import com.example.finalandroidapplication.viewmodel.PostViewModel
 import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 
@@ -59,20 +57,12 @@ fun AddPost(navController: NavHostController, uid: String) {
     val context = LocalContext.current
     val postViewModel: PostViewModel = viewModel()
     val profileViewModel: ProfileViewModel = viewModel()
-
     var username by remember { mutableStateOf("Loading...") }
     var postDes by remember { mutableStateOf("") }
-    val isPosted by postViewModel.isPosted.observeAsState(false)
 
     LaunchedEffect(Unit) {
         profileViewModel.fetchUsername(uid) { fetchedUsername ->
             username = fetchedUsername ?: "Unknown User"
-        }
-    }
-    LaunchedEffect(isPosted) {
-        if (isPosted) {
-            Toast.makeText(context, "Post uploaded successfully!", Toast.LENGTH_SHORT).show()
-            navController.popBackStack()
         }
     }
 
@@ -127,8 +117,13 @@ fun AddPost(navController: NavHostController, uid: String) {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(
                         onClick = {
-                            navController.navigate(Routes.BottomNav.routes)
                             postViewModel.uploadPost(postDes, uid)
+                            Toast.makeText(
+                                context,
+                                "Post added successfully!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            navController.popBackStack()
                         }
                     ) {
                         Text(text = "POST", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)

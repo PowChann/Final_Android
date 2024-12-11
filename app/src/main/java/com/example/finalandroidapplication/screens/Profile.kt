@@ -4,21 +4,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -39,7 +38,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalandroidapplication.R
@@ -51,29 +49,27 @@ import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Profile(navController: NavHostController, uid: String) {
-    val context = LocalContext.current
     val profileViewModel: ProfileViewModel = viewModel()
     val user by profileViewModel.userData.observeAsState(null)
     val authViewModel: AuthViewModel = viewModel()
-    val firebaseUser by authViewModel.firebaseUser.observeAsState()
 
     var isEditing by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("Loading...") }
     var name by remember { mutableStateOf("Loading...") }
+    var gender by remember { mutableStateOf("Loading...") }
     var phone by remember { mutableStateOf("Loading...") }
     var career by remember { mutableStateOf("Loading...") }
     var age by remember { mutableStateOf("Loading...") }
     var bio by remember { mutableStateOf("Loading...") }
 
-
     LaunchedEffect(uid) {
         profileViewModel.fetchUserProfile(uid)
     }
-
     LaunchedEffect(user) {
         user?.let {
             username = it.username
             name = it.name
+            gender = it.gender
             phone = it.phone
             career = it.career
             age = it.age
@@ -97,7 +93,7 @@ fun Profile(navController: NavHostController, uid: String) {
                     onClick = {
                         authViewModel.logout()
                         navController.navigate(Routes.Login.routes) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
                     },
                     containerColor = Color.White,
@@ -136,6 +132,25 @@ fun Profile(navController: NavHostController, uid: String) {
 
                 ProfileField("Username", username, isEditing, { username = it })
                 ProfileField("Full Name", name, isEditing, { name = it })
+                Text("Gender", fontSize = 15.sp, color = Color.Gray, modifier = Modifier.fillMaxWidth())
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = gender == "Male",
+                        onClick = { if (isEditing) gender = "Male" }
+                    )
+                    Text("Male")
+
+                    Spacer(modifier = Modifier.width(150.dp))
+
+                    RadioButton(
+                        selected = gender == "Female",
+                        onClick = { if (isEditing) gender = "Female" }
+                    )
+                    Text("Female")
+                }
                 ProfileField("Phone Number", phone, isEditing, { phone = it }, isNumeric = true)
                 ProfileField("Career", career, isEditing, { career = it })
                 ProfileField("Age", age, isEditing, { age = it }, isNumeric = true)
@@ -149,6 +164,7 @@ fun Profile(navController: NavHostController, uid: String) {
                             profileViewModel.updateUserProfile(
                                 uid = uid,
                                 name = name,
+                                gender = gender,
                                 phone = phone,
                                 career = career,
                                 age = age,

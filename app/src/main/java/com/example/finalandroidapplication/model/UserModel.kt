@@ -3,6 +3,7 @@ package com.example.finalandroidapplication.model
 data class UserModel(
     val uid: String = "",
     val username: String = "",
+    val gender: String = "",
     val name: String = "",
     val email: String = "",
     val password: String = "",

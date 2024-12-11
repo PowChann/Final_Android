@@ -11,7 +11,7 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class HomeViewModel : ViewModel() {
+class RoommateViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private val _postsAndUsers = MutableLiveData<List<Pair<PostModel, UserModel>>>()
     val postsAndUsers: LiveData<List<Pair<PostModel, UserModel>>> = _postsAndUsers

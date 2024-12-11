@@ -16,6 +16,11 @@ class ProfileViewModel : ViewModel() {
     private val _success = MutableLiveData<String>()
 
     fun fetchUserProfile(uid: String) {
+        if (uid.isBlank()) {
+            _error.postValue("Invalid user ID")
+            return
+        }
+
         firestore.collection("users").document(uid)
             .get()
             .addOnSuccessListener { document ->
@@ -34,14 +39,21 @@ class ProfileViewModel : ViewModel() {
     fun updateUserProfile(
         uid: String,
         name: String,
+        gender: String,
         phone: String,
         career: String,
         age: String,
         bio: String,
         username: String
     ) {
+        if (uid.isBlank()) {
+            _error.postValue("Invalid user ID")
+            return
+        }
+
         val updatedUser = mapOf(
             "name" to name,
+            "gender" to gender,
             "phone" to phone,
             "career" to career,
             "age" to age,

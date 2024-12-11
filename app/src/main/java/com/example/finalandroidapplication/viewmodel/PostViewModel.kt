@@ -2,17 +2,13 @@ package com.example.finalandroidapplication.viewmodel
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import android.content.Context
-import android.util.Log
-import androidx.lifecycle.LiveData
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
 
 class PostViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
-
     private val _isPosted = MutableLiveData<Boolean>()
-    val isPosted: LiveData<Boolean> get() = _isPosted
+    private val _isHouseAdded = MutableLiveData<Boolean>()
 
     fun uploadPost(
         postDes: String,
@@ -31,12 +27,43 @@ class PostViewModel : ViewModel() {
         firestore.collection("posts").document(postId)
             .set(postData)
             .addOnSuccessListener {
-                Log.d("PostViewModel", "Post uploaded successfully")
                 _isPosted.postValue(true)
             }
             .addOnFailureListener { exception ->
-                Log.e("PostViewModel", "Error uploading post: ${exception.message}")
                 _isPosted.postValue(false)
             }
     }
+
+    fun uploadHouse(
+        userId: String,
+        location: String,
+        price: String,
+        roomType: String,
+        numOfPeople: String,
+        amenities: Set<String>
+    ) {
+        val houseId = UUID.randomUUID().toString()
+        val timestamp = System.currentTimeMillis().toString()
+
+        val houseData = mapOf(
+            "userId" to userId,
+            "houseId" to houseId,
+            "location" to location,
+            "price" to price,
+            "roomType" to roomType,
+            "numOfPeople" to numOfPeople,
+            "amenities" to amenities.toList(),
+            "timestamp" to timestamp
+        )
+
+        firestore.collection("houses").document(houseId)
+            .set(houseData)
+            .addOnSuccessListener {
+                _isHouseAdded.postValue(true)
+            }
+            .addOnFailureListener {
+                _isHouseAdded.postValue(false)
+            }
+    }
+
 }

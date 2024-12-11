@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.finalandroidapplication.screens.AddHouse
 import com.example.finalandroidapplication.screens.AddPost
 import com.example.finalandroidapplication.screens.BottomNav
 import com.example.finalandroidapplication.screens.FindHouse
@@ -102,6 +103,10 @@ fun NavGraph(navController: NavHostController) {
         composable(Routes.AddPost.routes) {
             val uid = auth.currentUser?.uid ?: ""
             AddPost(navController, uid)
+        }
+        composable(Routes.AddHouse.routes) {
+            val uid = auth.currentUser?.uid ?: ""
+            AddHouse(navController, uid)
         }
         composable(
             route = "OtherProfile/{postId}",

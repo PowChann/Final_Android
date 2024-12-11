@@ -131,17 +131,17 @@ fun OtherProfile(navController: NavHostController, postId: String) {
                             .padding(16.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = "Full Name: ${user.name}", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(text = "Full Name: ${user.name}", fontSize = 20.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Age: ${user.age}", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(text = "Age: ${user.age}", fontSize = 20.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Career: ${user.career}", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(text = "Career: ${user.career}", fontSize = 20.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Phone: ${user.phone}", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(text = "Phone: ${user.phone}", fontSize = 20.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Bio:", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(text = "Bio:", fontSize = 20.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = user.bio, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(text = user.bio, fontSize = 20.sp)
                         }
                     }
                 }
