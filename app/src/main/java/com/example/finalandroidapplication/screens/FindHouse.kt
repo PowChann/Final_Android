@@ -36,7 +36,7 @@ fun FindHouse(navController: NavHostController) {
     val postsAndUsers by homeViewModel.postsAndUsers.observeAsState(emptyList())
 
     LaunchedEffect(Unit) {
-        homeViewModel.fetchPostsAndUsers()
+        homeViewModel.fetchPostsWithUsers()
     }
 
     Scaffold(

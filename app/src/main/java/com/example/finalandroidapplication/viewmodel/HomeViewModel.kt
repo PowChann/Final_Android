@@ -1,57 +1,48 @@
 package com.example.finalandroidapplication.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.finalandroidapplication.model.PostModel
 import com.example.finalandroidapplication.model.UserModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class HomeViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private val _postsAndUsers = MutableLiveData<List<Pair<PostModel, UserModel>>>()
     val postsAndUsers: LiveData<List<Pair<PostModel, UserModel>>> = _postsAndUsers
 
-    fun fetchPostsAndUsers() {
+    fun fetchPostsWithUsers() {
         firestore.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
-            .addOnSuccessListener { postsSnapshot ->
-                val posts = postsSnapshot.toObjects(PostModel::class.java)
-                fetchUsersForPosts(posts) { usersMap ->
-                    val result = posts.mapNotNull { post ->
-                        usersMap[post.userId]?.let { user ->
-                            Pair(post, user)
+            .addOnSuccessListener { postSnapshot ->
+                val postsList = mutableListOf<Pair<PostModel, UserModel>>()
+                viewModelScope.launch {
+                    postSnapshot.documents.forEach { postDoc ->
+                        val post = postDoc.toObject(PostModel::class.java)
+                        post?.let {
+                            val userDoc = firestore.collection("users")
+                                .document(it.userId)
+                                .get()
+                                .await()
+
+                            val user = userDoc.toObject(UserModel::class.java)
+                            user?.let { userData ->
+                                postsList.add(Pair(post, userData))
+                            }
                         }
                     }
-                    _postsAndUsers.value = result
+
+                    _postsAndUsers.postValue(postsList)
                 }
             }
-            .addOnFailureListener { error ->
-                Log.e("HomeViewModel", "Error fetching posts: ${error.message}")
-            }
-    }
+            .addOnFailureListener { exception ->
 
-    private fun fetchUsersForPosts(
-        posts: List<PostModel>,
-        onComplete: (Map<String, UserModel>) -> Unit
-    ) {
-        val userIds = posts.map { it.userId }.distinct()
-        firestore.collection("users")
-            .whereIn("uid", userIds)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val usersMap = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(UserModel::class.java)?.let { it.uid to it }
-                }.toMap()
-
-                onComplete(usersMap)
-            }
-            .addOnFailureListener { error ->
-                Log.e("HomeViewModel", "Error fetching users: ${error.message}")
-                onComplete(emptyMap())
             }
     }
 }
