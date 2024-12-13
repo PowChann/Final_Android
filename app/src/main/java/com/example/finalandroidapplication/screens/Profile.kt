@@ -55,9 +55,10 @@ import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Profile(navController: NavHostController, uid: String) {
+    val authViewModel: AuthViewModel = viewModel()
+    val firebaseUser by authViewModel.firebaseUser.observeAsState()
     val profileViewModel: ProfileViewModel = viewModel()
     val user by profileViewModel.userData.observeAsState(null)
-    val authViewModel: AuthViewModel = viewModel()
 
     var isEditing by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("Loading...") }
@@ -108,10 +109,10 @@ fun Profile(navController: NavHostController, uid: String) {
             if (!isEditing) {
                 FloatingActionButton(
                     onClick = {
+//                        authViewModel.logout()
                         navController.navigate(Routes.Login.routes) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
-                        authViewModel.logout()
                     },
                     containerColor = Color.White,
                     contentColor = Color.Black,

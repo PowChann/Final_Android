@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Textsms
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -112,12 +115,46 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { },
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp), // Thêm padding xung quanh hàng
+                        horizontalArrangement = Arrangement.spacedBy(16.dp), // Khoảng cách giữa các nút
+                        verticalAlignment = Alignment.CenterVertically // Căn giữa theo chiều dọc
                     ) {
-                        Text("Text")
+                        Button(
+                            onClick = { /* TODO */ },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .height(56.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Textsms,
+                                contentDescription = "Text",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Text",fontSize = 18.sp)
+                        }
+
+                        Button(
+                            onClick = { /* TODO */ },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .height(56.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Event,
+                                contentDescription = "Schedule",
+                                modifier = Modifier.size(25.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Schedule an appointment" )
+                        }
                     }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Card(

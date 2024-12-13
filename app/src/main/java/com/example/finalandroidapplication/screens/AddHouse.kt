@@ -1,5 +1,6 @@
 package com.example.finalandroidapplication.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,12 +18,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,6 +36,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,9 +62,11 @@ fun AddHouse(navController: NavHostController, uid: String) {
     var price by remember { mutableStateOf("") }
     var roomType by remember { mutableStateOf("Private") }
     var numOfPeople by remember { mutableStateOf("") }
-    var amenities by remember { mutableStateOf(mutableSetOf<String>()) }
+    val selectedAmenities = remember { mutableStateListOf<String>() }
 
     val context = LocalContext.current
+
+
 
 
     Scaffold(
@@ -90,11 +98,12 @@ fun AddHouse(navController: NavHostController, uid: String) {
                 TextField(
                     value = location,
                     onValueChange = { location = it },
-                    label = { Text("Location") },
+                    label = { Text("Address") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.textFieldColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                        containerColor = Color.White
+                    ),
+
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -106,30 +115,59 @@ fun AddHouse(navController: NavHostController, uid: String) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.textFieldColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = Color.White
                     )
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Room Type (Private or Shared)
-                Text("Room Type", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    RadioButton(
-                        selected = roomType == "Private",
-                        onClick = { roomType = "Private" }
-                    )
-                    Text("Private", modifier = Modifier.padding(start = 8.dp))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    RadioButton(
-                        selected = roomType == "Shared",
-                        onClick = { roomType = "Shared" }
-                    )
-                    Text("Shared", modifier = Modifier.padding(start = 8.dp))
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Room Type", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                RadioButton(
+                                    selected = roomType == "Private",
+                                    onClick = { roomType = "Private" }
+                                )
+                                Text(
+                                    text = "Private",
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                RadioButton(
+                                    selected = roomType == "Shared",
+                                    onClick = { roomType = "Shared" }
+                                )
+                                Text(
+                                    text = "Shared",
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Number of People
                 TextField(
@@ -139,67 +177,93 @@ fun AddHouse(navController: NavHostController, uid: String) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.textFieldColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = Color.White
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Amenities
-                Text("Amenities", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Checkbox(
-                        checked = amenities.contains("WiFi"),
-                        onCheckedChange = {
-                            if (it) amenities.add("WiFi") else amenities.remove("WiFi")
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Amenities",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        // List of amenities
+                        val amenities = listOf("Wi-Fi", "Parking", "Gym", "Pool", "Air Conditioner", "Laundry")
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Distribute amenities into 2 columns
+                            val amenitiesPerRow = 2
+                            for (i in amenities.indices step amenitiesPerRow) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    for (j in i until (i + amenitiesPerRow).coerceAtMost(amenities.size)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f).padding(end = if (j % 2 == 0) 8.dp else 0.dp)
+                                        ) {
+                                            Checkbox(
+                                                checked = selectedAmenities.contains(amenities[j]),
+                                                onCheckedChange = {
+                                                    if (it) {
+                                                        selectedAmenities.add(amenities[j]) // Add selected amenity
+                                                    } else {
+                                                        selectedAmenities.remove(amenities[j]) // Remove unselected amenity
+                                                    }
+                                                }
+                                            )
+                                            Text(
+                                                text = amenities[j],
+                                                modifier = Modifier.padding(start = 8.dp),
+                                                fontSize = 16.sp,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    )
-                    Text("WiFi", modifier = Modifier.padding(start = 8.dp))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Checkbox(
-                        checked = amenities.contains("Parking"),
-                        onCheckedChange = {
-                            if (it) amenities.add("Parking") else amenities.remove("Parking")
-                        }
-                    )
-                    Text("Parking", modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = amenities.contains("Gym"),
-                        onCheckedChange = {
-                            if (it) amenities.add("Gym") else amenities.remove("Gym")
-                        }
-                    )
-                    Text("Gym", modifier = Modifier.padding(start = 8.dp))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Checkbox(
-                        checked = amenities.contains("Pool"),
-                        onCheckedChange = {
-                            if (it) amenities.add("Pool") else amenities.remove("Pool")
-                        }
-                    )
-                    Text("Pool", modifier = Modifier.padding(start = 8.dp))
-                }
+
+
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Submit Button
                 Button(
-                    onClick = { postViewModel.uploadHouse(
-                            uid,
-                            location,
-                            price,
-                            roomType,
-                            numOfPeople,
-                            amenities)
-                        Toast.makeText(context, "House added successfully!", Toast.LENGTH_SHORT)
-                            .show()
-                        navController.popBackStack()
+                    onClick = {
+                        if (location.isBlank() || price.isBlank() || numOfPeople.isBlank()) {
+                            Toast.makeText(
+                                context,
+                                "Please fill all required fields.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            postViewModel.uploadHouse(
+                                uid,
+                                location,
+                                price,
+                                roomType,
+                                numOfPeople,
+                                selectedAmenities.toSet()
+                            )
+                            navController.popBackStack()
+                        }
                     },
                     modifier = Modifier.align(Alignment.End)
                 ) {
