@@ -1,8 +1,12 @@
 package com.example.finalandroidapplication.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,9 +41,11 @@ import androidx.navigation.NavHostController
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.navigation.Routes
 import com.example.finalandroidapplication.viewmodel.AuthViewModel
@@ -60,11 +66,20 @@ fun Profile(navController: NavHostController, uid: String) {
     var phone by remember { mutableStateOf("Loading...") }
     var career by remember { mutableStateOf("Loading...") }
     var age by remember { mutableStateOf("Loading...") }
+    var habits by remember { mutableStateOf(mapOf<String, String>()) }
     var bio by remember { mutableStateOf("Loading...") }
+    var avatarUrl by remember { mutableStateOf<Uri?>(null) }
+
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        avatarUrl = uri
+    }
 
     LaunchedEffect(uid) {
-        profileViewModel.fetchUserProfile(uid)
+        profileViewModel.fetchUserProfile(uid) // Lấy thông tin người dùng
+
     }
+
     LaunchedEffect(user) {
         user?.let {
             username = it.username
@@ -74,6 +89,8 @@ fun Profile(navController: NavHostController, uid: String) {
             career = it.career
             age = it.age
             bio = it.bio
+            habits = it.habits
+            avatarUrl = Uri.parse(it.avatarUrl)
         }
     }
 
@@ -91,10 +108,10 @@ fun Profile(navController: NavHostController, uid: String) {
             if (!isEditing) {
                 FloatingActionButton(
                     onClick = {
-                        authViewModel.logout()
                         navController.navigate(Routes.Login.routes) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
+                        authViewModel.logout()
                     },
                     containerColor = Color.White,
                     contentColor = Color.Black,
@@ -119,13 +136,20 @@ fun Profile(navController: NavHostController, uid: String) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.baseline_person_24),
+                    painter = if (!user?.avatarUrl.isNullOrEmpty()) {
+                        rememberAsyncImagePainter(model = user?.avatarUrl)
+                    } else {
+                        painterResource(id = R.drawable.baseline_person_24) // Ảnh mặc định
+                    },
                     contentDescription = "Profile Image",
                     modifier = Modifier
                         .size(96.dp)
                         .clip(CircleShape)
                         .border(2.dp, Color.Gray, CircleShape)
-                        .background(Color.LightGray),
+                        .background(Color.LightGray)
+                        .clickable(isEditing) {
+                            launcher.launch("image/*")
+                        },
                     colorFilter = ColorFilter.tint(Color.White)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -133,27 +157,111 @@ fun Profile(navController: NavHostController, uid: String) {
                 ProfileField("Username", username, isEditing, { username = it })
                 ProfileField("Full Name", name, isEditing, { name = it })
                 Text("Gender", fontSize = 15.sp, color = Color.Gray, modifier = Modifier.fillMaxWidth())
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    RadioButton(
-                        selected = gender == "Male",
-                        onClick = { if (isEditing) gender = "Male" }
-                    )
-                    Text("Male")
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Gender", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
 
-                    Spacer(modifier = Modifier.width(150.dp))
-
-                    RadioButton(
-                        selected = gender == "Female",
-                        onClick = { if (isEditing) gender = "Female" }
-                    )
-                    Text("Female")
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("Male", "Female").forEach { genderOption ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            if (isEditing) {
+                                                gender = if (gender == genderOption) "" else genderOption
+                                            }
+                                        }
+                                ) {
+                                    RadioButton(
+                                        selected = gender == genderOption,
+                                        onClick = {
+                                            if (isEditing) {
+                                                gender = if (gender == genderOption) "" else genderOption
+                                            }
+                                        },
+                                        enabled = isEditing
+                                    )
+                                    Text(
+                                        text = genderOption,
+                                        fontSize = 16.sp,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
                 ProfileField("Phone Number", phone, isEditing, { phone = it }, isNumeric = true)
                 ProfileField("Career", career, isEditing, { career = it })
                 ProfileField("Age", age, isEditing, { age = it }, isNumeric = true)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Habits", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+                        val habitOptions = mapOf(
+                            "Sleeping" to listOf("Early Sleeper", "Late Sleeper"),
+                            "Smoking" to listOf("Smoker", "Non-Smoker"),
+                            "Diet" to listOf("Vegetarian", "Non-Vegetarian"),
+                            "Pets" to listOf("Pet Lover", "No Pets")
+                        )
+
+                        habitOptions.forEach { (category, options) ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(category, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                options.forEach { option ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                if (isEditing) {
+                                                    habits = habits.toMutableMap().apply {
+                                                        this[category] = if (habits[category] == option) "" else option
+                                                    }
+                                                }
+                                            }
+                                    ) {
+                                        RadioButton(
+                                            selected = habits[category] == option,
+                                            onClick = {
+                                                if (isEditing) {
+                                                    habits = habits.toMutableMap().apply {
+                                                        this[category] = if (habits[category] == option) "" else option
+                                                    }
+                                                }
+                                            },
+                                            enabled = isEditing
+                                        )
+                                        Text(
+                                            text = option,
+                                            fontSize = 14.sp,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 ProfileField("Bio", bio, isEditing, { bio = it })
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -161,18 +269,24 @@ fun Profile(navController: NavHostController, uid: String) {
                 Button(
                     onClick = {
                         if (isEditing) {
-                            profileViewModel.updateUserProfile(
+                            profileViewModel.uploadImageAndSaveProfile(
                                 uid = uid,
+                                imageUri = avatarUrl,
                                 name = name,
                                 gender = gender,
                                 phone = phone,
                                 career = career,
                                 age = age,
                                 bio = bio,
-                                username = username
-                            )
+                                username = username,
+                                habits = habits
+                            ) {
+                                isEditing = false
+                            }
+
+                        } else {
+                            isEditing = true
                         }
-                        isEditing = !isEditing
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {

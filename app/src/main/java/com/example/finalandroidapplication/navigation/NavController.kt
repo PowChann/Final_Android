@@ -56,9 +56,12 @@ import com.google.firebase.auth.FirebaseAuth
 //            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 //            AddPost(navController, uid)
 //        }
-//        composable(Routes.OtherProfile.routes) {
-//            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-//            OtherProfile(navController, uid)
+//        composable(
+//            route = "OtherProfile/{postId}",
+//            arguments = listOf(navArgument("postId") { type = NavType.StringType })
+//        ) { backStackEntry ->
+//            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+//            OtherProfile(navController, postId)
 //        }
 //    }
 //}
@@ -109,11 +112,11 @@ fun NavGraph(navController: NavHostController) {
             AddHouse(navController, uid)
         }
         composable(
-            route = "OtherProfile/{postId}",
-            arguments = listOf(navArgument("postId") { type = NavType.StringType })
+            route = "OtherProfile/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val postId = backStackEntry.arguments?.getString("postId") ?: ""
-            OtherProfile(navController, postId)
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            OtherProfile(navController, userId)
         }
     }
 }

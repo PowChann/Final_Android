@@ -76,7 +76,9 @@ class AuthViewModel : ViewModel() {
                             "phone" to "",
                             "career" to "",
                             "age" to "",
-                            "bio" to ""
+                            "bio" to "",
+                            "avatarUrl" to "",
+                            "habits" to mapOf<String, String>()
                         )
                         FirebaseFirestore.getInstance().collection("users").document(user.uid)
                             .set(userData)

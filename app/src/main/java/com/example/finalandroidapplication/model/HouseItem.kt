@@ -40,11 +40,20 @@ fun HouseItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
+            .clickable {
+                navHostController.navigate("OtherProfile/${user.uid}") {
+                    popUpTo(navHostController.graph.startDestinationId) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = painterResource(id = R.drawable.baseline_person_24), // Updated icon to represent a house
+                    painter = painterResource(id = R.drawable.baseline_person_24),
                     contentDescription = "Avatar",
                     modifier = Modifier
                         .size(36.dp)

@@ -10,6 +10,8 @@ data class UserModel(
     val phone: String = "",
     val career: String = "",
     val age: String = "",
-    val bio: String = ""
+    val bio: String = "",
+    val habits: Map<String, String> = mapOf(),
+    val avatarUrl: String = ""
 )
 

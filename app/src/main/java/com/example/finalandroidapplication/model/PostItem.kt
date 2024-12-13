@@ -34,7 +34,7 @@ fun PostItem(
             .fillMaxWidth()
             .padding(8.dp)
             .clickable {
-                navHostController.navigate("OtherProfile/${post.postId}") {
+                navHostController.navigate("OtherProfile/${users.uid}") {
                     popUpTo(navHostController.graph.startDestinationId) {
                         saveState = true
                     }
@@ -91,6 +91,61 @@ fun PostItem(
                 fontSize = 16.sp,
                 color = Color.Black
             )
+            val nonEmptyHabits = users.habits.filterValues { it.isNotBlank() } // Loại bỏ các giá trị rỗng
+            if (nonEmptyHabits.isNotEmpty()) {
+                Text(
+                    text = "Habits:",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Column {
+                    val habitsPerRow = 3
+                    val habitList = nonEmptyHabits.values.toList()
+                    for (i in habitList.indices step habitsPerRow) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            for (j in i until (i + habitsPerRow).coerceAtMost(habitList.size)) {
+                                Card(
+                                    shape = MaterialTheme.shapes.medium,
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                    modifier = Modifier.wrapContentSize()
+                                ) {
+                                    Text(
+                                        text = habitList[j],
+                                        modifier = Modifier.padding(8.dp),
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            } else {
+                Row {
+                    Text(
+                        text = "Habits: ",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Text(
+                        text = "No data",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.size(8.dp))
             val formattedDate = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                 .format(Date(post.timestamp.toLongOrNull() ?: 0L))

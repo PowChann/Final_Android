@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -29,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -45,28 +47,21 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OtherProfile(navController: NavHostController, postId: String) {
+fun OtherProfile(navController: NavHostController, uid: String) {
     val firestore = FirebaseFirestore.getInstance()
     val userIdState = remember { mutableStateOf<String?>(null) }
     val userState = remember { mutableStateOf<UserModel?>(null) }
 
-    LaunchedEffect(postId) {
-        firestore.collection("posts").document(postId)
+    LaunchedEffect(uid) {
+        firestore.collection("users").document(uid)
             .get()
-            .addOnSuccessListener { document ->
-                val userId = document.getString("userId")
-                userIdState.value = userId
-
-                userId?.let {
-                    firestore.collection("users").document(it)
-                        .get()
-                        .addOnSuccessListener { userDoc ->
-                            val user = userDoc.toObject(UserModel::class.java)
-                            userState.value = user
-                        }
-                }
+            .addOnSuccessListener { userDoc ->
+                val user = userDoc.toObject(UserModel::class.java)
+                userState.value = user
             }
     }
+
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -108,7 +103,7 @@ fun OtherProfile(navController: NavHostController, postId: String) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "${user.name}",
+                        text = "${user.username}",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -130,19 +125,88 @@ fun OtherProfile(navController: NavHostController, postId: String) {
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = "Full Name: ${user.name}", fontSize = 20.sp)
+                        Column(Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Full Name:",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa tiêu đề và nội dung
+                                Text(
+                                    text = user.name,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Age: ${user.age}", fontSize = 20.sp)
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Age:",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = user.age,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Career: ${user.career}", fontSize = 20.sp)
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Career:",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = user.career,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Phone: ${user.phone}", fontSize = 20.sp)
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Phone:",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = user.phone,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Bio:", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = user.bio, fontSize = 20.sp)
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Bio: ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = user.bio,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
                         }
+
                     }
                 }
             }
