@@ -10,6 +10,7 @@ class PostViewModel : ViewModel() {
     private val _isPosted = MutableLiveData<Boolean>()
     private val _isHouseAdded = MutableLiveData<Boolean>()
 
+
     fun uploadPost(
         postDes: String,
         userId: String
@@ -65,5 +66,7 @@ class PostViewModel : ViewModel() {
                 _isHouseAdded.postValue(false)
             }
     }
+
+
 
 }

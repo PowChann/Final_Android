@@ -12,6 +12,7 @@ import com.example.finalandroidapplication.screens.BottomNav
 import com.example.finalandroidapplication.screens.FindHouse
 import com.example.finalandroidapplication.screens.FindRoommate
 import com.example.finalandroidapplication.screens.Login
+import com.example.finalandroidapplication.screens.Messages
 import com.example.finalandroidapplication.screens.Notifications
 import com.example.finalandroidapplication.screens.OtherProfile
 import com.example.finalandroidapplication.screens.Profile
@@ -85,6 +86,10 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.Notifications.routes) {
             Notifications(navController)
+        }
+
+        composable(Routes.Messages.routes) {
+            Messages(navController)
         }
         composable(Routes.YourRoommate.routes) {
             YourRoommate(navController)
