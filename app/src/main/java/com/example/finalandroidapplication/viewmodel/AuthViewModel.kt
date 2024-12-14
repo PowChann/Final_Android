@@ -74,6 +74,13 @@ class AuthViewModel : ViewModel() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null) {
+                        val defaultHabits = mapOf(
+                            "Diet" to "",
+                            "Pets" to "",
+                            "Sleeping" to "",
+                            "Smoking" to "",
+                            "Social" to ""
+                        )
                         val userData = hashMapOf(
                             "uid" to user.uid,
                             "username" to username,
@@ -84,7 +91,7 @@ class AuthViewModel : ViewModel() {
                             "age" to "",
                             "bio" to "",
                             "avatarUrl" to "",
-                            "habits" to mapOf<String, String>(),
+                            "habits" to defaultHabits,
                             "isVerified" to false
                         )
                         FirebaseFirestore.getInstance().collection("users").document(user.uid)

@@ -279,7 +279,6 @@ fun Profile(navController: NavHostController, uid: String) {
 
                 ProfileField("Username", username, isEditing, { username = it })
                 ProfileField("Full Name", name, isEditing, { name = it })
-                Text("Gender", fontSize = 15.sp, color = Color.Gray, modifier = Modifier.fillMaxWidth())
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -333,18 +332,19 @@ fun Profile(navController: NavHostController, uid: String) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Habits", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text("Habits", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
 
                         val habitOptions = mapOf(
                             "Sleeping" to listOf("Early Sleeper", "Late Sleeper"),
                             "Smoking" to listOf("Smoker", "Non-Smoker"),
                             "Diet" to listOf("Vegetarian", "Non-Vegetarian"),
-                            "Pets" to listOf("Pet Lover", "No Pets")
+                            "Pets" to listOf("Pet Lover", "No Pets"),
+                            "Social" to listOf("Stay Home", "Go Out")
                         )
 
                         habitOptions.forEach { (category, options) ->
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(category, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            Text(category, fontSize = 20.sp, fontWeight = FontWeight.Medium)
 
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -376,7 +376,7 @@ fun Profile(navController: NavHostController, uid: String) {
                                         )
                                         Text(
                                             text = option,
-                                            fontSize = 14.sp,
+                                            fontSize = 18.sp,
                                             modifier = Modifier.padding(start = 8.dp)
                                         )
                                     }
@@ -429,7 +429,7 @@ fun ProfileField(
     isNumeric: Boolean = false
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        Text(text = label, fontSize = 15.sp, color = Color.Gray)
+        Text(text = label, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         if (isEditable) {
             OutlinedTextField(
                 value = value,
@@ -438,7 +438,7 @@ fun ProfileField(
                 keyboardOptions = if (isNumeric) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default
             )
         } else {
-            Text(text = value, fontWeight = FontWeight.Medium, fontSize = 16.sp, color = Color.Black)
+            Text(text = value, fontSize = 20.sp, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
             Divider(color = Color.Gray, thickness = 1.dp)
         }
     }

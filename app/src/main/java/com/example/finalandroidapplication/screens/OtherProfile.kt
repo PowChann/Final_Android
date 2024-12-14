@@ -1,5 +1,6 @@
 package com.example.finalandroidapplication.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,14 +14,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Textsms
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,29 +48,44 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.model.UserModel
+import com.example.finalandroidapplication.utils.showDatePicker
+import com.example.finalandroidapplication.utils.showTimePicker
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OtherProfile(navController: NavHostController, uid: String) {
     val firestore = FirebaseFirestore.getInstance()
-    val userIdState = remember { mutableStateOf<String?>(null) }
-    val userState = remember { mutableStateOf<UserModel?>(null) }
+    val userData = remember { mutableStateOf<UserModel?>(null) }
+    val currentUser = remember { mutableStateOf<UserModel?>(null) }
+    val showDialog = remember { mutableStateOf(false) }
+    val selectedDate = remember { mutableStateOf("") }
+    val selectedTime = remember { mutableStateOf("") }
 
+    // Fetch user to view profile
     LaunchedEffect(uid) {
         firestore.collection("users").document(uid)
             .get()
             .addOnSuccessListener { userDoc ->
                 val user = userDoc.toObject(UserModel::class.java)
-                userState.value = user
+                userData.value = user
             }
     }
 
+    // Fetch current user
+    LaunchedEffect(Unit) {
+        firestore.collection("users").document(FirebaseAuth.getInstance().currentUser?.uid ?: "")
+            .get()
+            .addOnSuccessListener { userDoc ->
+                currentUser.value = userDoc.toObject(UserModel::class.java)
+            }
+    }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("${userState.value?.username ?: "Loading..."}'s Profile", fontSize = 24.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("${userData.value?.username ?: "Loading..."}'s Profile", fontSize = 24.sp, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
@@ -80,13 +97,15 @@ fun OtherProfile(navController: NavHostController, uid: String) {
             )
         },
         content = { padding ->
-            userState.value?.let { user ->
+            userData.value?.let { user ->
+                val isSameUser = currentUser.value?.uid == user.uid
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
                         .padding(16.dp)
                 ) {
+                    // Profile Image
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -105,9 +124,10 @@ fun OtherProfile(navController: NavHostController, uid: String) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Username
                     Text(
-                        text = "${user.username}",
-                        fontSize = 24.sp,
+                        text = user.username,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.primary,
@@ -122,8 +142,10 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Text Button
                         Button(
                             onClick = { /* TODO */ },
+                            enabled = !isSameUser,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
@@ -135,11 +157,13 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Text",fontSize = 18.sp)
+                            Text("Text", fontSize = 18.sp)
                         }
 
+                        // Schedule Appointment Button
                         Button(
-                            onClick = { /* TODO */ },
+                            onClick = { showDialog.value = true },
+                            enabled = !isSameUser,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
@@ -151,12 +175,13 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                 modifier = Modifier.size(25.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Schedule an appointment" )
+                            Text("Schedule an appointment")
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // User Details
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -229,7 +254,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "Bio: ",
+                                    text = "Bio:",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 20.sp,
                                     color = MaterialTheme.colorScheme.primary
@@ -241,10 +266,148 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
-
                         }
-
                     }
+
+                    // Pop up Schedule Dialog
+                    if (showDialog.value) {
+                        AlertDialog(
+                            onDismissRequest = { showDialog.value = false },
+                            title = { Text("Schedule Appointment") },
+                            text = {
+                                Column {
+                                    // Card hiển thị thông tin người dùng
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(8.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                                    ) {
+                                        Column(Modifier.padding(16.dp)) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = "You Are:",
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 20.sp,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = currentUser.value?.username ?: "Loading...",
+                                                    fontSize = 18.sp,
+                                                    color = Color.Black
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = "With User:",
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 20.sp,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = user.username,
+                                                    fontSize = 18.sp,
+                                                    color = Color.Black
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    // Nút chọn ngày
+                                    Button(
+                                        onClick = {
+                                            showDatePicker(navController.context) { date ->
+                                                selectedDate.value = date
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Pick Date")
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Nút chọn giờ
+                                    Button(
+                                        onClick = {
+                                            showTimePicker(navController.context) { time ->
+                                                selectedTime.value = time
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Pick Time")
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "Date: ${selectedDate.value}",
+                                            fontSize = 18.sp,
+                                            color = Color.Black
+                                        )
+                                        Text(
+                                            text = "Time: ${selectedTime.value}",
+                                            fontSize = 18.sp,
+                                            color = Color.Black
+                                        )
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                Button(onClick = {
+                                    val appointmentId = firestore.collection("appointments").document().id
+
+                                    val appointmentData = hashMapOf(
+                                        "appointmentId" to appointmentId,
+                                        "currentUserId" to (currentUser.value?.uid ?: "Unknown"),
+                                        "otherUserId" to (userData.value?.uid ?: "Unknown"),
+                                        "date" to selectedDate.value,
+                                        "time" to selectedTime.value,
+                                    )
+
+                                    FirebaseFirestore.getInstance().collection("appointments")
+                                        .document(appointmentId)
+                                        .set(appointmentData)
+                                        .addOnSuccessListener {
+                                            Toast.makeText(
+                                                navController.context,
+                                                "Appointment scheduled successfully for ${selectedDate.value} ${selectedTime.value}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            showDialog.value = false
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(
+                                                navController.context,
+                                                "Failed to schedule appointment: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                }) {
+                                    Text("Confirm")
+                                }
+                            },
+                            dismissButton = {
+                                Button(onClick = { showDialog.value = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
+
                 }
             }
         }
