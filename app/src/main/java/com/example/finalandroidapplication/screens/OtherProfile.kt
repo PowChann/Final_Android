@@ -118,9 +118,9 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp), // Thêm padding xung quanh hàng
-                        horizontalArrangement = Arrangement.spacedBy(16.dp), // Khoảng cách giữa các nút
-                        verticalAlignment = Alignment.CenterVertically // Căn giữa theo chiều dọc
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(
                             onClick = { /* TODO */ },
@@ -170,7 +170,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                     fontSize = 20.sp,
                                     color = MaterialTheme.colorScheme.primary
                                 )
-                                Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa tiêu đề và nội dung
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = user.name,
                                     fontSize = 16.sp,

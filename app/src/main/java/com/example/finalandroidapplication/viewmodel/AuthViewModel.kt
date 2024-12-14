@@ -1,15 +1,21 @@
 package com.example.finalandroidapplication.viewmodel
 
+import android.app.Activity
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.concurrent.TimeUnit
 
 class AuthViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
@@ -78,7 +84,8 @@ class AuthViewModel : ViewModel() {
                             "age" to "",
                             "bio" to "",
                             "avatarUrl" to "",
-                            "habits" to mapOf<String, String>()
+                            "habits" to mapOf<String, String>(),
+                            "isVerified" to false
                         )
                         FirebaseFirestore.getInstance().collection("users").document(user.uid)
                             .set(userData)
@@ -100,6 +107,7 @@ class AuthViewModel : ViewModel() {
         auth.signOut()
         _firebaseUser.postValue(null)
     }
+
 }
 
 

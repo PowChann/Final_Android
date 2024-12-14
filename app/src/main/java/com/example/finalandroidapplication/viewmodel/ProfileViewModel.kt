@@ -88,7 +88,6 @@ class ProfileViewModel : ViewModel() {
     }
 
 
-
     fun uploadImageAndSaveProfile(
         uid: String,
         imageUri: Uri?,

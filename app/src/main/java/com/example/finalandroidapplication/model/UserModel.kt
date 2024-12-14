@@ -12,6 +12,7 @@ data class UserModel(
     val age: String = "",
     val bio: String = "",
     val habits: Map<String, String> = mapOf(),
-    val avatarUrl: String = ""
+    val avatarUrl: String = "",
+    val isVerified: Boolean = false,
 )
 
