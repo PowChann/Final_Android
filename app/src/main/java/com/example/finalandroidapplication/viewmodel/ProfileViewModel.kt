@@ -1,13 +1,21 @@
 package com.example.finalandroidapplication.viewmodel
 
+import android.app.Activity
 import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.finalandroidapplication.model.UserModel
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import java.util.concurrent.TimeUnit
 
 class ProfileViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
@@ -23,6 +31,7 @@ class ProfileViewModel : ViewModel() {
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
+
 
     fun fetchUserProfile(uid: String) {
         _isLoading.postValue(true)
@@ -137,6 +146,61 @@ class ProfileViewModel : ViewModel() {
                 callback(null)
             }
     }
+
+    fun sendOTP(
+        activity: Activity,
+        phone: String,
+        onCodeSent: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+            override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                // Automatically verifies and logs in the user
+            }
+
+            override fun onVerificationFailed(e: FirebaseException) {
+                onError(e.message ?: "Verification failed")
+            }
+
+            override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                onCodeSent(verificationId)
+            }
+        }
+
+        val options = PhoneAuthOptions.newBuilder(FirebaseAuth.getInstance())
+            .setPhoneNumber("+84$phone")
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(activity)
+            .setCallbacks(callbacks)
+            .build()
+        PhoneAuthProvider.verifyPhoneNumber(options)
+    }
+
+    fun verifyOTP(
+        verificationId: String,
+        otp: String,
+        uid: String,
+        onVerified: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val credential = PhoneAuthProvider.getCredential(verificationId, otp)
+        FirebaseAuth.getInstance().signInWithCredential(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    firestore.collection("users").document(uid)
+                        .update("isVerified", true)
+                        .addOnSuccessListener {
+                            onVerified()
+                        }
+                        .addOnFailureListener { e ->
+                            onError(e.message ?: "Failed to update verification status")
+                        }
+                } else {
+                    onError(task.exception?.message ?: "OTP verification failed")
+                }
+            }
+    }
+
 
 }
 

@@ -1,6 +1,8 @@
 package com.example.finalandroidapplication.screens
 
+import android.app.Activity
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -43,6 +45,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.rememberAsyncImagePainter
@@ -56,9 +59,11 @@ import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 @Composable
 fun Profile(navController: NavHostController, uid: String) {
     val authViewModel: AuthViewModel = viewModel()
-    val firebaseUser by authViewModel.firebaseUser.observeAsState()
     val profileViewModel: ProfileViewModel = viewModel()
     val user by profileViewModel.userData.observeAsState(null)
+    val context = LocalContext.current
+    val activity = context as? Activity
+
 
     var isEditing by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("Loading...") }
@@ -70,6 +75,12 @@ fun Profile(navController: NavHostController, uid: String) {
     var habits by remember { mutableStateOf(mapOf<String, String>()) }
     var bio by remember { mutableStateOf("Loading...") }
     var avatarUrl by remember { mutableStateOf<Uri?>(null) }
+
+    var showOTPDialog by remember { mutableStateOf(false) }
+    var phoneInput by remember { mutableStateOf("") }
+    var otpInput by remember { mutableStateOf("") }
+    var verificationId by remember { mutableStateOf("") }
+
 
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -153,7 +164,93 @@ fun Profile(navController: NavHostController, uid: String) {
                         },
                     colorFilter = ColorFilter.tint(Color.White)
                 )
+
+
+
                 Spacer(modifier = Modifier.height(16.dp))
+                ElevatedButton(
+                    onClick = {
+                        if (user?.isVerified == true) {
+                            Toast.makeText(context, "Already authenticated", Toast.LENGTH_SHORT).show()
+                        } else {
+                            showOTPDialog = true
+                        }
+                    },
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text(if (user?.isVerified == true) "Authenticated" else "Unauthenticated")
+                }
+
+                if (showOTPDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showOTPDialog = false },
+                        title = { Text("Phone Verification") },
+                        text = {
+                            Column {
+                                TextField(
+                                    value = phoneInput,
+                                    onValueChange = { phoneInput = it },
+                                    label = { Text("Enter phone number") }
+                                )
+                                if (verificationId.isNotBlank()) {
+                                    TextField(
+                                        value = otpInput,
+                                        onValueChange = { otpInput = it },
+                                        label = { Text("Enter OTP") }
+                                    )
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            if (verificationId.isBlank()) {
+                                Button(onClick = {
+                                    activity?.let {
+                                        profileViewModel.sendOTP(
+                                            activity = it,
+                                            phone = phoneInput,
+                                            onCodeSent = { id ->
+                                                verificationId = id
+                                                Toast.makeText(context, "OTP sent!", Toast.LENGTH_SHORT).show()
+                                            },
+                                            onError = { error ->
+                                                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                            }
+                                        )
+                                    } ?: Toast.makeText(context, "Activity is null", Toast.LENGTH_SHORT).show()
+                                }) {
+                                    Text("Send OTP")
+                                }
+                            } else {
+                                Button(onClick = {
+                                    profileViewModel.verifyOTP(
+                                        verificationId = verificationId,
+                                        otp = otpInput,
+                                        uid = uid,
+                                        onVerified = {
+                                            showOTPDialog = false
+                                            Toast.makeText(context, "Authenticated!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onError = { error ->
+                                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
+                                }) {
+                                    Text("Verify OTP")
+                                }
+                            }
+                        },
+                        dismissButton = {
+                            Button(onClick = { showOTPDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+
+
 
                 ProfileField("Username", username, isEditing, { username = it })
                 ProfileField("Full Name", name, isEditing, { name = it })
