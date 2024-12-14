@@ -56,6 +56,8 @@ dependencies {
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.firestore.ktx)
+    implementation ("androidx.work:work-runtime-ktx:2.8.0")
+
     val nav_version = "2.8.4"
 
     implementation ("androidx.compose.material:material-icons-extended")

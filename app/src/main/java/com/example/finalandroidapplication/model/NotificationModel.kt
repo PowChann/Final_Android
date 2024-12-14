@@ -8,6 +8,7 @@ data class NotificationModel(
     val description: String = "",
     val timeStamp: String = "",
     val triggerTimeStamp: String = "",
+    val isPushed : Boolean = false ,
     val actionUrl: String? = null
 )
 

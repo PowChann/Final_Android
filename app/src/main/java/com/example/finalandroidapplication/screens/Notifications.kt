@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.example.finalandroidapplication.navigation.Routes
 import com.example.finalandroidapplication.model.NotificationItem
 
@@ -30,12 +31,21 @@ fun Notifications(navController: NavHostController) {
     val notificationViewModel : NotificationViewModel = viewModel()
     val notifications by notificationViewModel.notificationsWithUsers.observeAsState(emptyList())
 
-    // Observe the list of notifications from the ViewModel
 
+    val context = LocalContext.current
 
     // Fetch notifications when the screen is launched
     LaunchedEffect(Unit) {
-        notificationViewModel.fetchNotificationsByUser()
+//        notificationViewModel.pushNotification(
+//            "ybIkVNqVHzVE4A3QY34azpvTjYV2",
+//            "HOUSE",
+//            "Found new house matched",
+//            "We found new house that match your favor",
+//            "",
+//            (System.currentTimeMillis()+ 60 * 1000).toString()  ,
+//
+//        )
+        notificationViewModel.fetchNotificationsByUser(context)
     }
 
     Scaffold(
