@@ -1,14 +1,19 @@
 package com.example.finalandroidapplication.viewmodel
 
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.model.UserModel
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
@@ -19,7 +24,7 @@ import java.util.concurrent.TimeUnit
 
 class ProfileViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
-
+    private val auth =  FirebaseAuth.getInstance()
     private val _userData = MutableLiveData<UserModel?>()
     val userData: LiveData<UserModel?> = _userData
 
@@ -32,23 +37,23 @@ class ProfileViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
+    private var storedVerificationId: String? = null
+
 
     fun fetchUserProfile(uid: String) {
-        _isLoading.postValue(true)
+        firestore.collection("users").document(uid)
+            .addSnapshotListener { snapshot, exception ->
+                if (exception != null) {
+                    _error.postValue("Failed to fetch user profile: ${exception.message}")
+                    return@addSnapshotListener
+                }
 
-        firestore.collection("users").document(uid).get()
-            .addOnSuccessListener { document ->
-                val user = document.toObject(UserModel::class.java)
-                if (user != null) {
-                    _userData.postValue(user)
+                if (snapshot != null && snapshot.exists()) {
+                    val user = snapshot.toObject(UserModel::class.java)
+                    _userData.postValue(user) // Cập nhật giá trị LiveData
                 } else {
                     _error.postValue("User data not found")
-                    _isLoading.postValue(false)
                 }
-            }
-            .addOnFailureListener { exception ->
-                _error.postValue("Failed to fetch user profile: ${exception.message}")
-                _isLoading.postValue(false)
             }
     }
 
@@ -155,7 +160,7 @@ class ProfileViewModel : ViewModel() {
     ) {
         val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                // Automatically verifies and logs in the user
+                Log.d("OTP", "Verification completed automatically")
             }
 
             override fun onVerificationFailed(e: FirebaseException) {
@@ -163,42 +168,63 @@ class ProfileViewModel : ViewModel() {
             }
 
             override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                storedVerificationId = verificationId
                 onCodeSent(verificationId)
             }
         }
 
-        val options = PhoneAuthOptions.newBuilder(FirebaseAuth.getInstance())
+        val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber("+84$phone")
             .setTimeout(60L, TimeUnit.SECONDS)
             .setActivity(activity)
             .setCallbacks(callbacks)
             .build()
+
         PhoneAuthProvider.verifyPhoneNumber(options)
     }
 
+    // Verify OTP
     fun verifyOTP(
-        verificationId: String,
         otp: String,
-        uid: String,
         onVerified: () -> Unit,
         onError: (String) -> Unit
     ) {
+        val verificationId = storedVerificationId
+        if (verificationId.isNullOrBlank()) {
+            onError("No verification ID available")
+            return
+        }
+
         val credential = PhoneAuthProvider.getCredential(verificationId, otp)
-        FirebaseAuth.getInstance().signInWithCredential(credential)
+        auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    firestore.collection("users").document(uid)
-                        .update("isVerified", true)
-                        .addOnSuccessListener {
-                            onVerified()
-                        }
-                        .addOnFailureListener { e ->
-                            onError(e.message ?: "Failed to update verification status")
-                        }
+                    onVerified()
                 } else {
                     onError(task.exception?.message ?: "OTP verification failed")
                 }
             }
+    }
+
+    // Verify and update user
+    fun verifyAndUpdateUser(
+        uid: String,
+        otp: String,
+        onVerified: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        verifyOTP(otp, {
+            firestore.collection("users").document(uid)
+                .update("isVerified", true)
+                .addOnSuccessListener {
+                    // Cập nhật LiveData để giao diện phản ánh thay đổi ngay lập tức
+                    _userData.value = _userData.value?.copy(isVerified = true)
+                    onVerified()
+                }
+                .addOnFailureListener { e ->
+                    onError(e.message ?: "Failed to update verification status")
+                }
+        }, onError)
     }
 
 

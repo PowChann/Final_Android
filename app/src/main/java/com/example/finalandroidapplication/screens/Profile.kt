@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -64,7 +66,7 @@ fun Profile(navController: NavHostController, uid: String) {
     val context = LocalContext.current
     val activity = context as? Activity
 
-
+    var isLoading by remember { mutableStateOf(true) }
     var isEditing by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("Loading...") }
     var name by remember { mutableStateOf("Loading...") }
@@ -88,8 +90,7 @@ fun Profile(navController: NavHostController, uid: String) {
     }
 
     LaunchedEffect(uid) {
-        profileViewModel.fetchUserProfile(uid) // Lấy thông tin người dùng
-
+        profileViewModel.fetchUserProfile(uid)
     }
 
     LaunchedEffect(user) {
@@ -165,20 +166,45 @@ fun Profile(navController: NavHostController, uid: String) {
                     colorFilter = ColorFilter.tint(Color.White)
                 )
 
-
-
                 Spacer(modifier = Modifier.height(16.dp))
-                ElevatedButton(
-                    onClick = {
-                        if (user?.isVerified == true) {
-                            Toast.makeText(context, "Already authenticated", Toast.LENGTH_SHORT).show()
-                        } else {
+                Surface(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .border(
+                            width = 2.dp,
+                            color = if (user?.isVerified == true) Color.Green else Color.Red,
+                            shape = CircleShape
+                        )
+                        .clip(CircleShape)
+                        .clickable(enabled = user?.isVerified == false || user?.isVerified == null) {
                             showOTPDialog = true
-                        }
-                    },
-                    modifier = Modifier.padding(top = 16.dp)
+                        },
+                    color = Color.White
                 ) {
-                    Text(if (user?.isVerified == true) "Authenticated" else "Unauthenticated")
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        // Icon
+                        Icon(
+                            imageVector = if (user?.isVerified == true) Icons.Filled.CheckCircle else Icons.Filled.Close,
+                            contentDescription = if (user?.isVerified == true) "Verified Icon" else "Not Verified Icon",
+                            tint = if (user?.isVerified == true) Color.Green else Color.Red,
+                            modifier = Modifier.size(20.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // Text
+                        Text(
+                            text = if (user?.isVerified == true) "VERIFIED" else "NOT VERIFIED",
+                            color = if (user?.isVerified == true) Color.Green else Color.Red,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
 
                 if (showOTPDialog) {
@@ -222,10 +248,9 @@ fun Profile(navController: NavHostController, uid: String) {
                                 }
                             } else {
                                 Button(onClick = {
-                                    profileViewModel.verifyOTP(
-                                        verificationId = verificationId,
-                                        otp = otpInput,
+                                    profileViewModel.verifyAndUpdateUser(
                                         uid = uid,
+                                        otp = otpInput,
                                         onVerified = {
                                             showOTPDialog = false
                                             Toast.makeText(context, "Authenticated!", Toast.LENGTH_SHORT).show()
