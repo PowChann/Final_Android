@@ -41,19 +41,46 @@ class ProfileViewModel : ViewModel() {
 
 
     fun fetchUserProfile(uid: String) {
-        firestore.collection("users").document(uid)
-            .addSnapshotListener { snapshot, exception ->
-                if (exception != null) {
-                    _error.postValue("Failed to fetch user profile: ${exception.message}")
-                    return@addSnapshotListener
-                }
+        if (uid.isBlank()) {
+            _error.postValue("User ID is invalid")
+            return
+        }
 
-                if (snapshot != null && snapshot.exists()) {
-                    val user = snapshot.toObject(UserModel::class.java)
-                    _userData.postValue(user) // Cập nhật giá trị LiveData
+        _isLoading.postValue(true)
+
+        firestore.collection("users").document(uid)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    Log.d("Firestore", "Raw snapshot data: ${document.data}")
+                    val data = document.data
+                    val user = UserModel (
+                        uid = data?.get("uid") as? String ?: "",
+                        username = data?.get("username") as? String ?: "",
+                        gender = data?.get("gender") as? String ?: "",
+                        name = data?.get("name") as? String ?: "",
+                        email = data?.get("email") as? String ?: "",
+                        phone = data?.get("phone") as? String ?: "",
+                        career = data?.get("career") as? String ?: "",
+                        age = data?.get("age") as? String ?: "",
+                        bio = data?.get("bio") as? String ?: "",
+                        habits = data?.get("habits") as? Map<String, String> ?: mapOf(),
+                        avatarUrl = data?.get("avatarUrl") as? String ?: "",
+                        isVerified = data?.get("isVerified") as? Boolean ?: false
+                    )
+                    Log.d("Firestore", "User data fetched: $user")
+                    _userData.postValue(user)
+                    _success.postValue("User profile fetched successfully")
                 } else {
-                    _error.postValue("User data not found")
+                    _userData.postValue(null)
+                    _error.postValue("User profile not found")
                 }
+            }
+            .addOnFailureListener { exception ->
+                _error.postValue("Failed to fetch user profile: ${exception.message}")
+            }
+            .addOnCompleteListener {
+                _isLoading.postValue(false)
             }
     }
 
@@ -68,6 +95,7 @@ class ProfileViewModel : ViewModel() {
         username: String,
         avatarUrl: String?,
         habits: Map<String, String>
+
     ) {
         if (uid.isBlank()) {
             _error.postValue("Invalid user ID")
