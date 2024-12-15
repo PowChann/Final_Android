@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -65,7 +66,7 @@ fun Messages(
         },
         content = { padding ->
             Column(modifier = Modifier.padding(padding)) {
-                if (channels.value.isEmpty()) {
+                if (channels.isEmpty()) {
                     // Display a message if there are no channels
                     Text(
                         text = "No messages available.",
