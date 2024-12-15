@@ -82,6 +82,8 @@ class AuthViewModel : ViewModel() {
                             "Social" to ""
                         )
                         val isVerified = false
+                        val isRoommate = false
+                        val rating = 5.0
                         val userData = hashMapOf(
                             "uid" to user.uid,
                             "username" to username,
@@ -93,7 +95,9 @@ class AuthViewModel : ViewModel() {
                             "bio" to "",
                             "avatarUrl" to "",
                             "habits" to defaultHabits,
-                            "isVerified" to isVerified
+                            "isVerified" to isVerified,
+                            "isRoommate" to isRoommate,
+                            "rating" to rating
                         )
                         FirebaseFirestore.getInstance().collection("users").document(user.uid)
                             .set(userData)

@@ -13,6 +13,8 @@ data class UserModel(
     val bio: String = "",
     val habits: Map<String, String> = mapOf(),
     val avatarUrl: String = "",
-    val isVerified: Boolean = false ,
+    val isVerified: Boolean = false,
+    val isRoommate: Boolean = false,
+    val rating: Double = 5.0
 )
 

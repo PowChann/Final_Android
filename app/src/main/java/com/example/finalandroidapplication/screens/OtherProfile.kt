@@ -134,21 +134,23 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Text and Schedule Buttons in One Row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Text Button
                         Button(
-                            onClick = { /* TODO */ },
+                            onClick = {
+                                // TODO: Implement Text Message functionality
+                                Toast.makeText(navController.context, "Text clicked!", Toast.LENGTH_SHORT).show()
+                            },
                             enabled = !isSameUser,
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxWidth()
                                 .height(56.dp)
                         ) {
                             Icon(
@@ -160,13 +162,11 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                             Text("Text", fontSize = 18.sp)
                         }
 
-                        // Schedule Appointment Button
                         Button(
                             onClick = { showDialog.value = true },
                             enabled = !isSameUser,
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxWidth()
                                 .height(56.dp)
                         ) {
                             Icon(
@@ -175,13 +175,53 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                 modifier = Modifier.size(25.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Schedule an appointment")
+                            Text("Set Schedule")
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // User Details
+                    // Add Roommate Button
+                    Button(
+                        onClick = {
+                            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+                            if (currentUserId != null && userData.value != null) {
+                                firestore.collection("users").document(userData.value!!.uid)
+                                    .update("isRoommate", true)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(
+                                            navController.context,
+                                            "Roommate status updated successfully!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    .addOnFailureListener { exception ->
+                                        Toast.makeText(
+                                            navController.context,
+                                            "Failed to update roommate status: ${exception.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                            } else {
+                                Toast.makeText(
+                                    navController.context,
+                                    "Unable to identify user or target profile!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        enabled = !isSameUser,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .height(56.dp)
+                    ) {
+                        Text("Add Roommate", fontSize = 18.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // User Details Card
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -254,7 +294,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "Bio:",
+                                    text = "Bio: ",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 20.sp,
                                     color = MaterialTheme.colorScheme.primary
@@ -266,10 +306,25 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Rating: ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "${user.rating} / 5.0",
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
 
-                    // Pop up Schedule Dialog
                     if (showDialog.value) {
                         AlertDialog(
                             onDismissRequest = { showDialog.value = false },
@@ -367,6 +422,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                             },
                             confirmButton = {
                                 Button(onClick = {
+
                                     if (selectedDate.value.isEmpty() || selectedTime.value.isEmpty()) {
                                         Toast.makeText(
                                             navController.context,
@@ -403,6 +459,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                                 ).show()
                                             }
                                     }
+
                                 }) {
                                     Text("Confirm")
                                 }
@@ -414,7 +471,6 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                             }
                         )
                     }
-
                 }
             }
         }

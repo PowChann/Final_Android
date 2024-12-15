@@ -22,13 +22,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.finalandroidapplication.model.UserModel
+import com.example.finalandroidapplication.navigation.Routes
 import com.example.finalandroidapplication.utils.showDatePicker
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContractTemplate(navHostController: NavHostController) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val currentUser = remember { mutableStateOf<UserModel?>(null) }
     var nameA by remember { mutableStateOf("") }
     var phoneA by remember { mutableStateOf("") }
     var nameB by remember { mutableStateOf("") }
@@ -40,6 +48,13 @@ fun ContractTemplate(navHostController: NavHostController) {
     var costSplit by remember { mutableStateOf("Chia đều") }
     var showDialog by remember { mutableStateOf(false) }
     var agreed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        FirebaseFirestore.getInstance().collection("users").document(FirebaseAuth.getInstance().currentUser?.uid ?: "")
+            .get()
+            .addOnSuccessListener { userDoc ->
+                currentUser.value = userDoc.toObject(UserModel::class.java)
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -206,7 +221,34 @@ fun ContractTemplate(navHostController: NavHostController) {
                         onDismissRequest = { showDialog = false },
                         confirmButton = {
                             Button(
-                                onClick = { showDialog = false },
+                                onClick = {
+                                    if (currentUser != null) {
+                                        val contractData = hashMapOf(
+                                            "userId" to currentUser.value?.uid,
+                                            "partyA_name" to nameA,
+                                            "partyA_phone" to phoneA,
+                                            "partyB_name" to nameB,
+                                            "partyB_phone" to phoneB,
+                                            "address" to address,
+                                            "rent" to rent,
+                                            "startDate" to startDate,
+                                            "duration" to duration,
+                                            "costSplit" to costSplit
+                                        )
+                                        FirebaseFirestore.getInstance().collection("contracts")
+                                            .add(contractData)
+                                            .addOnSuccessListener {
+                                                Toast.makeText(context, "Contract saved successfully!", Toast.LENGTH_SHORT).show()
+                                                showDialog = false
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(context, "Failed to save contract: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        navHostController.popBackStack()
+                                    } else {
+                                        Toast.makeText(context, "Failed to save contract", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
                                 enabled = agreed,
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                             ) {
@@ -232,13 +274,107 @@ fun ContractTemplate(navHostController: NavHostController) {
                         text = {
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Text(
-                                    text = "Phương thức chia tiền: $costSplit",
+                                    text = "Thông tin Bên A (Party A):",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                                )
+                                Text(
+                                    text = "Họ và tên: ",
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.Black
                                 )
+                                Text(text = nameA, color = Color.Black)
+
+                                Text(
+                                    text = "Số điện thoại: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = phoneA, color = Color.Black)
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Party B Information
+                                Text(
+                                    text = "Thông tin Bên B (Party B):",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                                )
+                                Text(
+                                    text = "Họ và tên: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = nameB, color = Color.Black)
+
+                                Text(
+                                    text = "Số điện thoại: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = phoneB, color = Color.Black)
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Contract Details
+                                Text(
+                                    text = "Chi tiết hợp đồng:",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                                )
+                                Text(
+                                    text = "Địa chỉ: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = address, color = Color.Black)
+
+                                Text(
+                                    text = "Tiền thuê phòng: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = rent, color = Color.Black)
+
+                                Text(
+                                    text = "Ngày bắt đầu thuê: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = startDate, color = Color.Black)
+
+                                Text(
+                                    text = "Thời hạn thuê: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = duration, color = Color.Black)
+
+                                Text(
+                                    text = "Phương thức chia tiền: ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Text(text = costSplit, color = Color.Black)
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Agreement Checkbox
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = agreed,
+                                        onCheckedChange = { agreed = it }
+                                    )
+                                    Text(text = "I have read and agree to the terms", color = Color.Black)
+                                }
                             }
                         }
                     )
                 }
+
             }
         }
     )
@@ -293,7 +429,7 @@ fun HeaderContract() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Date: ",
+            text = "Date: ${LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/YYYY"))}",
             fontSize = 16.sp,
             color = Color.Black,
             textAlign = TextAlign.Right

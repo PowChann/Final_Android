@@ -19,6 +19,8 @@ import com.example.finalandroidapplication.screens.Profile
 import com.example.finalandroidapplication.screens.Register
 import com.example.finalandroidapplication.screens.YourRoommate
 import com.example.finalandroidapplication.screens.ChannelDetails
+import com.example.finalandroidapplication.screens.ContractTemplate
+import com.example.finalandroidapplication.screens.RulesAndPolicies
 import com.google.firebase.auth.FirebaseAuth
 
 //@Composable
@@ -131,6 +133,13 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             OtherProfile(navController, userId)
+        }
+
+        composable(Routes.ContractTemplate.routes) {
+            ContractTemplate(navController)
+        }
+        composable(Routes.RulesAndPolicies.routes) {
+            RulesAndPolicies(navController)
         }
     }
 }
