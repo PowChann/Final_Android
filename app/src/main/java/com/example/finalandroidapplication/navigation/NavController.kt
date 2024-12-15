@@ -141,6 +141,7 @@ fun NavGraph(navController: NavHostController) {
         composable(Routes.RulesAndPolicies.routes) {
             RulesAndPolicies(navController)
         }
+
     }
 }
 
