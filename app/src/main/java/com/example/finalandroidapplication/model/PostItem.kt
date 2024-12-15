@@ -89,8 +89,8 @@ fun PostItem(
             Text(
                 text = post.postDes,
                 fontSize = 16.sp,
-                color = Color.Black
-            )
+                color = Color.Black,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
             val nonEmptyHabits = users.habits.filterValues { it.isNotBlank() } // Loại bỏ các giá trị rỗng
             if (nonEmptyHabits.isNotEmpty()) {
                 Text(

@@ -81,8 +81,7 @@ class AuthViewModel : ViewModel() {
                             "Smoking" to "",
                             "Social" to ""
                         )
-
-                        val isVerified = false ;
+                        val isVerified = false
                         val userData = hashMapOf(
                             "uid" to user.uid,
                             "username" to username,

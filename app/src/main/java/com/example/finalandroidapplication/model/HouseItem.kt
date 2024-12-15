@@ -81,7 +81,7 @@ fun HouseItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Price: ${house.price}",
+                text = "Price: ${house.price} VND/Month",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

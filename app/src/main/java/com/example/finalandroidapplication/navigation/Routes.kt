@@ -12,4 +12,5 @@ sealed class Routes(val routes: String) {
     object AddPost: Routes("addpost")
     object AddHouse: Routes("addhouse")
     object Messages: Routes("messages")
+    object ContractTemplate: Routes("contract")
 }

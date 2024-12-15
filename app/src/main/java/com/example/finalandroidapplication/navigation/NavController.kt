@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import com.example.finalandroidapplication.screens.AddHouse
 import com.example.finalandroidapplication.screens.AddPost
 import com.example.finalandroidapplication.screens.BottomNav
+import com.example.finalandroidapplication.screens.ContractTemplate
 import com.example.finalandroidapplication.screens.FindHouse
 import com.example.finalandroidapplication.screens.FindRoommate
 import com.example.finalandroidapplication.screens.Login
@@ -64,6 +65,9 @@ import com.google.firebase.auth.FirebaseAuth
 //            val postId = backStackEntry.arguments?.getString("postId") ?: ""
 //            OtherProfile(navController, postId)
 //        }
+        //composable(Routes.ContractTemplate.routes) {
+        //    ContractTemplate(navController)
+        //}
 //    }
 //}
 
@@ -122,6 +126,9 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             OtherProfile(navController, userId)
+        }
+        composable(Routes.ContractTemplate.routes) {
+            ContractTemplate(navController)
         }
     }
 }

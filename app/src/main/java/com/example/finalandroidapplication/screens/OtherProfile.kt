@@ -276,7 +276,6 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                             title = { Text("Schedule Appointment") },
                             text = {
                                 Column {
-                                    // Card hiển thị thông tin người dùng
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -368,34 +367,42 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                             },
                             confirmButton = {
                                 Button(onClick = {
-                                    val appointmentId = firestore.collection("appointments").document().id
+                                    if (selectedDate.value.isEmpty() || selectedTime.value.isEmpty()) {
+                                        Toast.makeText(
+                                            navController.context,
+                                            "Please pick your date and time",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        val appointmentId = firestore.collection("appointments").document().id
 
-                                    val appointmentData = hashMapOf(
-                                        "appointmentId" to appointmentId,
-                                        "currentUserId" to (currentUser.value?.uid ?: "Unknown"),
-                                        "otherUserId" to (userData.value?.uid ?: "Unknown"),
-                                        "date" to selectedDate.value,
-                                        "time" to selectedTime.value,
-                                    )
+                                        val appointmentData = hashMapOf(
+                                            "appointmentId" to appointmentId,
+                                            "currentUserId" to (currentUser.value?.uid ?: "Unknown"),
+                                            "otherUserId" to (userData.value?.uid ?: "Unknown"),
+                                            "date" to selectedDate.value,
+                                            "time" to selectedTime.value
+                                        )
 
-                                    FirebaseFirestore.getInstance().collection("appointments")
-                                        .document(appointmentId)
-                                        .set(appointmentData)
-                                        .addOnSuccessListener {
-                                            Toast.makeText(
-                                                navController.context,
-                                                "Appointment scheduled successfully for ${selectedDate.value} ${selectedTime.value}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            showDialog.value = false
-                                        }
-                                        .addOnFailureListener { e ->
-                                            Toast.makeText(
-                                                navController.context,
-                                                "Failed to schedule appointment: ${e.message}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
+                                        FirebaseFirestore.getInstance().collection("appointments")
+                                            .document(appointmentId)
+                                            .set(appointmentData)
+                                            .addOnSuccessListener {
+                                                Toast.makeText(
+                                                    navController.context,
+                                                    "Appointment scheduled successfully for ${selectedDate.value} at ${selectedTime.value}",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                showDialog.value = false
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(
+                                                    navController.context,
+                                                    "Failed to schedule appointment: ${e.message}",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                    }
                                 }) {
                                     Text("Confirm")
                                 }
