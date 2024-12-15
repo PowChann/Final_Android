@@ -23,7 +23,6 @@ import java.util.*
 @Composable
 fun NotificationItem(
     notification: NotificationModel,
-    userModel: UserModel,
     navHostController: NavHostController
 ) {
     // Function to calculate time difference

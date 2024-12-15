@@ -91,7 +91,7 @@ fun BottomNav(navController: NavHostController, uid: String){
                 FindRoommate(navController)
             }
             composable(Routes.Notifications.routes) {
-                Notifications(navController)
+                Notifications(navController, uid)
             }
             composable(Routes.YourRoommate.routes) {
                 YourRoommate(navController)

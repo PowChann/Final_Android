@@ -1,86 +1,94 @@
 package com.example.finalandroidapplication.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.model.ChannelModel
+import com.example.finalandroidapplication.model.UserModel
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.compose.ui.draw.clip
-import com.example.finalandroidapplication.model.UserModel
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChannelItem(
-    channel: ChannelModel,
-    user: UserModel,
-    navHostController: NavHostController
-) {
+fun ChannelItem(channel: ChannelModel, usersData: List<UserModel?>, navController: NavHostController) {
+    // Participant names with "You" prepended
+    val participantNames = remember(usersData) {
+        buildString {
+            append("You")
+
+            append(
+                usersData
+                    .filterNotNull() // Ensure no null values
+                    .joinToString(", ") { user -> user.name }
+            )
+        }
+    }
+
+    // Format the timestamp
+    val formattedTime = remember(channel.latestMessageTimestamp) {
+        SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(channel.latestMessageTimestamp))
+    }
+
+    // Preview of the last message
+    val lastMessagePreview = channel.latestMessage ?: "No messages yet."
+
+    // UI Layout
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp)
+            .clickable {
+                navController.navigate("ChannelDetails/${channel.channelID}")
+            }
     ) {
-        // Profile Icon
-        Icon(
-            imageVector = Icons.Filled.Person,
-            contentDescription = "Profile Icon",
+        // Circular Avatar/Icon
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = MaterialTheme.colorScheme.primaryContainer,
             modifier = Modifier
                 .size(48.dp)
-                .padding(4.dp)
-                .clip(CircleShape),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Message details
-        Column(
-            modifier = Modifier.weight(1f)
+                .padding(end = 16.dp)
         ) {
-            // Display the user's name
             Text(
-                text = user.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            // Last message
-            Text(
-                text = "${if (channel.senderId == user.uid) "You: " else ""}${channel.lastMessage}",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                text = participantNames.firstOrNull()?.toString() ?: "U",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(8.dp)
             )
         }
 
-        // Time of the last message
+        // Message Details
+        Column(modifier = Modifier.weight(1f)) {
+            // Participants or Channel Name
+            Text(
+                text = participantNames,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            // Last Message Preview
+            Text(
+                text = lastMessagePreview,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+        }
+
+        // Timestamp
         Text(
-            text = formatTime(channel.lastMessageTimeStamp),
-            fontSize = 12.sp,
-            color = Color.Gray,
-            modifier = Modifier.padding(end = 8.dp)
+            text = formattedTime,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 8.dp)
         )
     }
 }
 
-// Function to format the timestamp into a readable time
-fun formatTime(timestamp: Long): String {
-    val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-    return sdf.format(Date(timestamp))
-}
+
+
+
+

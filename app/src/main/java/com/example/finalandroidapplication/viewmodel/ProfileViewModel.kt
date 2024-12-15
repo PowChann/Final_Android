@@ -28,6 +28,10 @@ class ProfileViewModel : ViewModel() {
     private val _userData = MutableLiveData<UserModel?>()
     val userData: LiveData<UserModel?> = _userData
 
+    private val _usersData = MutableLiveData<List<UserModel?>>()
+    val usersData : LiveData<List<UserModel?>> = _usersData
+
+
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
 
@@ -38,6 +42,63 @@ class ProfileViewModel : ViewModel() {
     val isLoading: LiveData<Boolean> = _isLoading
 
     private var storedVerificationId: String? = null
+
+
+
+
+    private val fetchedProfiles = mutableSetOf<String>() // To keep track of profiles we've already fetched
+
+    // Function to fetch multiple user profiles based on UIDs
+    fun fetchMultipleUsersProfile(uids: List<String>) {
+        _isLoading.postValue(true)  // Set loading state to true
+
+        // Start with an empty list to collect user profiles
+        val usersList = mutableListOf<UserModel?>()
+
+        // Fetch profiles for each UID
+        uids.forEach { uid ->
+            firestore.collection("users").document(uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        // Retrieve the user data from Firestore
+                        val data = document.data
+                        val user = UserModel(
+                            uid = data?.get("uid") as? String ?: "",
+                            username = data?.get("username") as? String ?: "",
+                            gender = data?.get("gender") as? String ?: "",
+                            name = data?.get("name") as? String ?: "",
+                            email = data?.get("email") as? String ?: "",
+                            phone = data?.get("phone") as? String ?: "",
+                            career = data?.get("career") as? String ?: "",
+                            age = data?.get("age") as? String ?: "",
+                            bio = data?.get("bio") as? String ?: "",
+                            habits = data?.get("habits") as? Map<String, String> ?: mapOf(),
+                            avatarUrl = data?.get("avatarUrl") as? String ?: "",
+                            isVerified = data?.get("isVerified") as? Boolean ?: false
+                        )
+                        // Add the user to the list
+                        usersList.add(user)
+
+                        // If we've fetched all the profiles, update the LiveData
+                        if (usersList.size == uids.size) {
+                            _usersData.postValue(usersList)
+                        }
+                    } else {
+                        // Add a null value if the document doesn't exist
+                        usersList.add(null)
+
+                        // If we've fetched all the profiles, update the LiveData
+                        if (usersList.size == uids.size) {
+                            _usersData.postValue(usersList)
+                        }
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    _error.postValue("Failed to fetch user profile: ${exception.message}")
+                }
+        }
+    }
 
 
     fun fetchUserProfile(uid: String) {
@@ -254,6 +315,9 @@ class ProfileViewModel : ViewModel() {
                 }
         }, onError)
     }
+
+
+
 
 
 }

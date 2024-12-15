@@ -1,12 +1,12 @@
 package com.example.finalandroidapplication.model
 
-data class MessageModel (
-    val messageId : String = "",
-    val senderId : String = "",
-    val receiverId : String = "",
-    val content : String = "",
-    val timeStamp : String = "",
-    val status: String = "sending",
+data class MessageModel(
+    val messageID: String = "",
+    val senderID: String = "",
+    val content: String = "",
+    val timestamp: Long = 0,
+    val channelID: String = "",
 )
+
 
 

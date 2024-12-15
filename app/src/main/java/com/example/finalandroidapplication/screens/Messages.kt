@@ -1,8 +1,9 @@
 package com.example.finalandroidapplication.screens
 
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar;
@@ -17,36 +18,47 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.finalandroidapplication.model.ChannelModel
-import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.viewmodel.ChannelViewModel
-import com.example.finalandroidapplication.viewmodel.NotificationViewModel
+import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Messages(
     navController: NavHostController,
-
+    uid: String
 ) {
-    // Observe channels from the ViewModel
+    // Lấy dữ liệu từ ChannelViewModel
     val channelViewModel: ChannelViewModel = viewModel()
-    val channels by channelViewModel.channelWithUsers.observeAsState(emptyList())
-    val context = LocalContext.current
+    val channels by channelViewModel.userChannels.observeAsState(emptyList())
 
-    // Trigger fetchChannelsByUser when the composable is launched
-    LaunchedEffect(context) {
-        channelViewModel.fetchChannelsByUser(context)
+    val profileViewModel: ProfileViewModel = viewModel()
+    val usersData by profileViewModel.usersData.observeAsState(emptyList())
+
+
+    // Trigger fetchChannelsByUser when composable is initialized
+    LaunchedEffect(uid) {
+        if (uid.isNotBlank()) {
+            channelViewModel.fetchChannelsByUser(uid)
+        }
+    }
+
+    // Trigger profile fetching once channels are loaded
+    LaunchedEffect(channels) {
+        // Collect all participants' UIDs
+
+        // For each channel, collect participant UIDs
+        channels.forEach { channel ->
+            channel?.participants?.forEach {
+                profileViewModel.fetchMultipleUsersProfile(channel.participants)
+            }
+        }
     }
 
     // UI Scaffold
@@ -65,27 +77,31 @@ fun Messages(
             )
         },
         content = { padding ->
-            Column(modifier = Modifier.padding(padding)) {
-                if (channels.isEmpty()) {
-                    // Display a message if there are no channels
-                    Text(
-                        text = "No messages available.",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    // Display the list of channels
-                    channels.forEach { (channel ,user) ->
-                        ChannelItem(
-                            channel,
-                            user,
-                            navHostController = navController
-                        )
+
+            if (channels.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier.padding(padding)
+                ) {
+                    items(channels) { channel ->
+                        if (channel != null) {
+
+                            // Pass the channel and participants to the ChannelItem
+                             ChannelItem(channel, usersData, navController)
+                        }
                     }
                 }
+            } else {
+                // Show a message if no channels are available
+                Text(
+                    text = "No messages available.",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     )
 }
+
+
 

@@ -1,73 +1,65 @@
 package com.example.finalandroidapplication.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.finalandroidapplication.model.ChannelModel
-import com.example.finalandroidapplication.model.NotificationModel
-import com.example.finalandroidapplication.model.UserModel
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.util.UUID
 
 class ChannelViewModel : ViewModel() {
 
     private val firestore = FirebaseFirestore.getInstance()
-    private val _channelsWithUsers = MutableLiveData<List<Pair<ChannelModel, UserModel>>>()
-    val channelWithUsers: LiveData<List<Pair<ChannelModel, UserModel>>> get() = _channelsWithUsers
-    // LiveData to observe creation state
+
     private val _isCreatedChannel = MutableLiveData<Boolean>()
+    private val _error = MutableLiveData<String>()
+    val error: LiveData<String> = _error
 
+    private val _success = MutableLiveData<String>()
+    val success: LiveData<String> = _success
 
-    fun fetchChannelsByUser(context: Context) {
-        // Fetch channels and associate them with user details
+    private val _userChannels = MutableLiveData<List<ChannelModel?>>()
+    val userChannels: LiveData<List<ChannelModel?>> = _userChannels
+
+    // Fetching channels where the user (uid) is a participant
+    fun fetchChannelsByUser(uid: String) {
+        if (uid.isBlank()) {
+            _error.postValue("User ID is invalid")
+            return
+        }
+
+        Log.d("FetchChannels", "Fetching channels for user ID: $uid")
+
+        // Query the 'channels' collection where the 'participants' array contains the user ID
         firestore.collection("channels")
-            .orderBy("latestMessageTimeStamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("ChannelViewModel", "Error fetching channels: ${error.message}")
-                    return@addSnapshotListener
+            .whereArrayContains("participants", uid)  // Check if the uid is in the participants list
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                Log.d("FetchChannels", "Query successful. Found ${querySnapshot.size()} channels.")
+
+                // Map the documents to a list of ChannelModel objects
+                val channels = querySnapshot.documents.mapNotNull { document ->
+                    document.toObject(ChannelModel::class.java)
                 }
 
-                val channelsWithUsersList = mutableListOf<Pair<ChannelModel, UserModel>>()
-                snapshot?.documents?.forEach { document ->
-                    val channel = document.toObject(ChannelModel::class.java)
-                    if (channel != null) {
-                        // Fetch user details for each channel
-                        firestore.collection("users")
-                            .document(channel.senderId)
-                            .get()
-                            .addOnSuccessListener { userDoc ->
-                                val user = userDoc.toObject(UserModel::class.java)
-                                if (user != null) {
-                                    channelsWithUsersList.add(Pair(channel, user))
-                                    _channelsWithUsers.value = channelsWithUsersList
-                                }
-                            }
-                            .addOnFailureListener { userError ->
-                                Log.e(
-                                    "ChannelViewModel",
-                                    "Error fetching user: ${userError.message}"
-                                )
-                            }
-                    }
+                if (channels.isNotEmpty()) {
+                    // Update the LiveData with the fetched channels
+                    _userChannels.postValue(channels)
+                    _success.postValue("Channels fetched successfully")
+                } else {
+                    // If no channels are found, notify the error
+                    _error.postValue("No channels found for this user.")
                 }
+            }
+            .addOnFailureListener { exception ->
+                // Handle any errors that occur during the fetching process
+                Log.e("FetchChannels", "Error fetching channels: ${exception.localizedMessage}")
+                _error.postValue("Error fetching channels: ${exception.localizedMessage}")
             }
     }
 
 
+    fun createChannel() {
 
-
-
-
-
-
-
-
-
+    }
 }

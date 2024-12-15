@@ -1,18 +1,14 @@
 package com.example.finalandroidapplication.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.finalandroidapplication.model.NotificationModel
-import com.example.finalandroidapplication.model.UserModel
-import com.example.finalandroidapplication.utils.pushPhoneNotification
+
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+
 import java.util.UUID
 
 class NotificationViewModel : ViewModel() {
@@ -21,65 +17,46 @@ class NotificationViewModel : ViewModel() {
     private val _isNotifPushed = MutableLiveData<Boolean>()
     val isNotifPushed: LiveData<Boolean> get() = _isNotifPushed
 
-    private val _notificationsWithUsers = MutableLiveData<List<Pair<NotificationModel, UserModel>>>()
-    val notificationsWithUsers: LiveData<List<Pair<NotificationModel, UserModel>>> get() = _notificationsWithUsers
 
-    fun fetchNotificationsByUser(context: Context) {
+    private val _error = MutableLiveData<String>()
+    val error: LiveData<String> = _error
+
+    private val _success = MutableLiveData<String>()
+    val success: LiveData<String> = _success
+
+    private val _userNotifications = MutableLiveData<List<NotificationModel?>>()
+    val userNotifications : LiveData<List<NotificationModel?>> = _userNotifications
+
+    fun fetchNotificationByUid(uid : String) {
+        if (uid.isBlank()) {
+            _error.postValue("User ID is invalid")
+            return
+        }
+        Log.d("FetchNotification", "Fetching notifications for user ID: $uid")
         firestore.collection("notifications")
+            .whereEqualTo("userId", uid)
             .orderBy("timeStamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { notificationSnapshot, error ->
-                if (error != null) {
-                    Log.e("NotificationViewModel", "Error listening to notifications: ${error.message}")
-                    _notificationsWithUsers.postValue(emptyList())
-                    return@addSnapshotListener
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                // Map Firestore documents to NotificationModel
+                Log.d("FetchNotification", "Query successful. Found ${querySnapshot.size()} notifications.")
+                val notifications = querySnapshot.documents.mapNotNull { document ->
+                    document.toObject(NotificationModel::class.java)
                 }
 
-                val notificationsAndUsersList = mutableListOf<Pair<NotificationModel, UserModel>>()
-
-                notificationSnapshot?.documents?.forEach { notificationDoc ->
-                    val notification = notificationDoc.toObject(NotificationModel::class.java)
-                    notification?.let {
-                        if (!notification.userId.isNullOrEmpty()) {
-                            viewModelScope.launch {
-                                try {
-                                    // Only process notifications whose triggerTimeStamp has passed
-                                    if (notification.triggerTimeStamp.toLong() <= System.currentTimeMillis()) {
-                                        val userDoc = firestore.collection("users")
-                                            .document(notification.userId)
-                                            .get()
-                                            .await()
-
-                                        val user = userDoc.toObject(UserModel::class.java)
-                                        if (user != null) {
-                                            notificationsAndUsersList.add(Pair(notification, user))
-
-                                            // Push to phone notification
-
-                                        } else {
-                                            Log.w(
-                                                "NotificationViewModel",
-                                                "User not found for userId: ${notification.userId}"
-                                            )
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("NotificationViewModel", "Error fetching user: ${e.message}")
-                                }
-                            }
-                        } else {
-                            Log.w(
-                                "NotificationViewModel",
-                                "Invalid userId for notification: ${notification.notifyId}"
-                            )
-                        }
-                    }
+                // Update LiveData with the fetched notifications
+                if (notifications.isNotEmpty()) {
+                    Log.d("FetchNotification", "Fetched notifications: ${notifications.size}")
+                    _userNotifications.postValue(notifications)
+                    _success.postValue("Notifications fetched successfully")
+                } else {
+                    _error.postValue("No notifications found for this user.")
                 }
-                Log.d(
-                    "NotificationViewModel",
-                    "Fetched notifications: ${notificationsAndUsersList.size}"
-                )
-                _notificationsWithUsers.postValue(notificationsAndUsersList)
             }
+            .addOnFailureListener { exception ->
+                // Handle error while fetching notifications
+                _error.postValue("Error fetching notifications: ${exception.localizedMessage}") }
+
     }
 
 

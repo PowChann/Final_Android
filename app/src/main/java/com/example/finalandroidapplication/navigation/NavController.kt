@@ -9,7 +9,6 @@ import androidx.navigation.navArgument
 import com.example.finalandroidapplication.screens.AddHouse
 import com.example.finalandroidapplication.screens.AddPost
 import com.example.finalandroidapplication.screens.BottomNav
-import com.example.finalandroidapplication.screens.ContractTemplate
 import com.example.finalandroidapplication.screens.FindHouse
 import com.example.finalandroidapplication.screens.FindRoommate
 import com.example.finalandroidapplication.screens.Login
@@ -19,6 +18,7 @@ import com.example.finalandroidapplication.screens.OtherProfile
 import com.example.finalandroidapplication.screens.Profile
 import com.example.finalandroidapplication.screens.Register
 import com.example.finalandroidapplication.screens.YourRoommate
+import com.example.finalandroidapplication.screens.ChannelDetails
 import com.google.firebase.auth.FirebaseAuth
 
 //@Composable
@@ -65,9 +65,6 @@ import com.google.firebase.auth.FirebaseAuth
 //            val postId = backStackEntry.arguments?.getString("postId") ?: ""
 //            OtherProfile(navController, postId)
 //        }
-        //composable(Routes.ContractTemplate.routes) {
-        //    ContractTemplate(navController)
-        //}
 //    }
 //}
 
@@ -88,12 +85,14 @@ fun NavGraph(navController: NavHostController) {
         composable(Routes.FindRoommate.routes) {
             FindRoommate(navController)
         }
-        composable(Routes.Notifications.routes) {
-            Notifications(navController)
+        composable("${Routes.Notifications.routes}/{uid}") {backStackEntry ->
+            val uid = backStackEntry.arguments?.getString("uid") ?: ""
+            Notifications(navController, uid)
         }
 
-        composable(Routes.Messages.routes) {
-            Messages(navController)
+        composable("${Routes.Messages.routes}/{uid}") {backStackEntry ->
+            val uid = backStackEntry.arguments?.getString("uid") ?: ""
+            Messages(navController, uid)
         }
         composable(Routes.YourRoommate.routes) {
             YourRoommate(navController)
@@ -120,6 +119,12 @@ fun NavGraph(navController: NavHostController) {
             val uid = auth.currentUser?.uid ?: ""
             AddHouse(navController, uid)
         }
+
+//        composable("${Routes.ChannelDetails.routes}/{channelID}") {
+//            backStackEntry -> val channelID = backStackEntry.arguments?.getString("channelID") ?: ""
+//            ChannelDetails(navController, channelID)
+//        }
+
         composable(
             route = "OtherProfile/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
@@ -127,10 +132,8 @@ fun NavGraph(navController: NavHostController) {
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             OtherProfile(navController, userId)
         }
-        composable(Routes.ContractTemplate.routes) {
-            ContractTemplate(navController)
-        }
     }
 }
+
 
 
