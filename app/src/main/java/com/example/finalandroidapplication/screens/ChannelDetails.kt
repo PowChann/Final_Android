@@ -1,5 +1,6 @@
 package com.example.finalandroidapplication.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,37 +10,51 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.model.ChatBubble
-import com.example.finalandroidapplication.model.MessageModel
-import com.example.finalandroidapplication.model.UserModel
-import java.text.SimpleDateFormat
+import com.example.finalandroidapplication.viewmodel.ChannelDetailsViewModel
+import com.example.finalandroidapplication.viewmodel.ProfileViewModel
+import com.google.firebase.auth.FirebaseAuth
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChannelDetails(
     channelId: String,
-    usersData: List<UserModel>,
-    messages: List<MessageModel>,
     navController: NavHostController
 ) {
-    val participantNames = remember(usersData) {
-        buildString {
-            append("You")
-            val otherNames = usersData.joinToString(", ") { user -> user.name }
-            if (otherNames.isNotEmpty()) {
-                append(", $otherNames")
-            }
-        }
+    val messagesModel: ChannelDetailsViewModel = viewModel()
+    val profileViewModel: ProfileViewModel = viewModel()
+    val usersData by profileViewModel.usersData.observeAsState(emptyList())
+    // Observe messages
+    val messages by messagesModel.messagesChannel.observeAsState(emptyList())
+
+
+
+    val error by messagesModel.error.observeAsState()
+
+    // Call fetchMessages when channelId changes
+    LaunchedEffect(channelId) {
+        messagesModel.fetchMessages(channelId)
     }
 
+    LaunchedEffect(messages) {
+        val senderList = messages.mapNotNull { it?.senderID }.distinct()
+        Log.d("senderList", "${senderList}")
+        profileViewModel.fetchMultipleUsersProfile(senderList)
+
+    }
+
+
+
+
+    // Message input state
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
 
     Scaffold(
@@ -62,6 +77,14 @@ fun ChannelDetails(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                if (error != null) {
+                    Text(
+                        text = error!!,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+
                 // Messages List
                 LazyColumn(
                     modifier = Modifier
@@ -71,7 +94,10 @@ fun ChannelDetails(
                     reverseLayout = true // Show newest messages at the bottom
                 ) {
                     items(messages) { message ->
-                        ChatBubble(message = message, usersData = usersData)
+                        if (message != null) {
+                            Log.d("usersData", "${usersData}")
+                            ChatBubble(message = message , usersData)
+                        }
                     }
                 }
 
@@ -93,8 +119,15 @@ fun ChannelDetails(
                         )
                     )
                     IconButton(onClick = {
-                        // Handle send action (logic not implemented)
-                        inputText = TextFieldValue("") // Clear input
+                        val uid = FirebaseAuth.getInstance().currentUser?.uid
+                        if (uid == null) {
+                            Log.e("ChannelDetails", "UID is null. Cannot send message.")
+                            return@IconButton
+                        }
+                        if (inputText.text.isNotBlank()) {
+                            messagesModel.sendMessage(channelId, uid, inputText.text)
+                            inputText = TextFieldValue("") // Clear input
+                        }
                     }) {
                         Icon(
                             imageVector = Icons.Default.Send,

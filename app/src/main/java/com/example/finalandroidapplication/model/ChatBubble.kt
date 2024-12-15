@@ -20,9 +20,16 @@ import java.util.Locale
 
 
 @Composable
-fun ChatBubble(message: MessageModel, usersData: List<UserModel>) {
-    val senderName = remember(message.senderID) {
-        usersData.find { it.uid == message.senderID }?.name ?: "Unknown Sender"
+fun ChatBubble(message: MessageModel, usersData: List<UserModel?>) {
+    val senderName = remember(usersData) {
+        var name = "Unknown User" // Default value
+        for (user in usersData) {
+            if (user?.uid == message.senderID) {
+                name = user.name
+                break // Stop iterating once the match is found
+            }
+        }
+        name
     }
 
     val formattedTime = remember(message.timestamp) {

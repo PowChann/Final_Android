@@ -122,10 +122,10 @@ fun NavGraph(navController: NavHostController) {
             AddHouse(navController, uid)
         }
 
-//        composable("${Routes.ChannelDetails.routes}/{channelID}") {
-//            backStackEntry -> val channelID = backStackEntry.arguments?.getString("channelID") ?: ""
-//            ChannelDetails(navController, channelID)
-//        }
+        composable("${Routes.ChannelDetails.routes}/{channelID}") {
+            backStackEntry -> val channelID = backStackEntry.arguments?.getString("channelID") ?: ""
+            ChannelDetails(channelID, navController)
+        }
 
         composable(
             route = "OtherProfile/{userId}",

@@ -59,7 +59,36 @@ class ChannelViewModel : ViewModel() {
     }
 
 
-    fun createChannel() {
+    fun createChannel(participants: List<String>) {
+        if (participants.isEmpty()) {
+            _error.postValue("Participants list cannot be empty")
+            return
+        }
 
+        // Generate a unique channel ID
+        val channelID = firestore.collection("channels").document().id
+
+        // Create a ChannelModel object
+        val channel = ChannelModel(
+            channelID = channelID,
+            participants = participants,
+            latestMessageTimestamp = 0L, // No messages yet
+            latestMessage = "" // No latest message initially
+        )
+
+        // Save the channel to Firestore
+        firestore.collection("channels")
+            .document(channelID) // Use the generated channel ID
+            .set(channel)
+            .addOnSuccessListener {
+                Log.d("CreateChannel", "Channel created successfully: $channelID")
+                _isCreatedChannel.postValue(true)
+                _success.postValue("Channel created successfully")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("CreateChannel", "Error creating channel: ${exception.localizedMessage}")
+                _error.postValue("Error creating channel: ${exception.localizedMessage}")
+            }
     }
+
 }
