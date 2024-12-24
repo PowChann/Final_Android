@@ -15,6 +15,8 @@ sealed class Routes(val routes: String) {
     object ContractTemplate: Routes("contract")
     object ChannelDetails: Routes("ChannelDetails")
     object RulesAndPolicies: Routes("rules")
+    object MyHome: Routes("MyHome")
+    object Schedule: Routes("Schedule")
 }
 
 

@@ -43,8 +43,8 @@ fun BottomBar(navControllerBot: NavHostController) {
             Icons.Rounded.Notifications
         ),
         BottomNavItem(
-            "Your Roommate",
-            Routes.YourRoommate.routes,
+            "MyHome",
+            Routes.MyHome.routes,
             Icons.Rounded.AccountCircle
         ),
         BottomNavItem(
@@ -93,8 +93,8 @@ fun BottomNav(navController: NavHostController, uid: String){
             composable(Routes.Notifications.routes) {
                 Notifications(navController, uid)
             }
-            composable(Routes.YourRoommate.routes) {
-                YourRoommate(navController)
+            composable(Routes.MyHome.routes) {
+                MyHome(navController, uid)
             }
             composable(Routes.Profile.routes) {
                 Profile(navController, uid)

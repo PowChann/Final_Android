@@ -20,7 +20,9 @@ import com.example.finalandroidapplication.screens.Register
 import com.example.finalandroidapplication.screens.YourRoommate
 import com.example.finalandroidapplication.screens.ChannelDetails
 import com.example.finalandroidapplication.screens.ContractTemplate
+import com.example.finalandroidapplication.screens.MyHome
 import com.example.finalandroidapplication.screens.RulesAndPolicies
+import com.example.finalandroidapplication.screens.Schedule
 import com.google.firebase.auth.FirebaseAuth
 
 //@Composable
@@ -96,13 +98,20 @@ fun NavGraph(navController: NavHostController) {
             val uid = backStackEntry.arguments?.getString("uid") ?: ""
             Messages(navController, uid)
         }
-        composable(Routes.YourRoommate.routes) {
-            YourRoommate(navController)
-        }
+//        composable(Routes.YourRoommate.routes) {
+//            YourRoommate(navController)
+//        }
         composable("${Routes.Profile.routes}/{uid}") { backStackEntry ->
             val uid = backStackEntry.arguments?.getString("uid") ?: ""
             Profile(navController, uid)
         }
+
+        composable("${Routes.Schedule.routes}/{uid}") { backStackEntry ->
+            val uid = backStackEntry.arguments?.getString("uid") ?: ""
+            Schedule(navController, uid)
+        }
+
+
         composable(Routes.BottomNav.routes) {
             val uid = auth.currentUser?.uid ?: ""
             BottomNav(navController = navController, uid = uid)
@@ -140,6 +149,11 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.RulesAndPolicies.routes) {
             RulesAndPolicies(navController)
+        }
+
+        composable("${Routes.MyHome.routes}/{uid}") {backStackEntry ->
+            val uid = backStackEntry.arguments?.getString("uid") ?: ""
+            MyHome(navController, uid)
         }
 
     }

@@ -374,9 +374,38 @@ class ProfileViewModel : ViewModel() {
         }, onError)
     }
 
+    fun fetchUsername(uid: String, callback: (String?) -> Unit) {
+
+        firestore.collection("users").document(uid)
+
+            .get()
+
+            .addOnSuccessListener { document ->
+
+                if (document != null && document.exists()) {
+
+                    val username = document.getString("username")
+
+                    callback(username)
+
+                } else {
+
+                    callback(null)
+
+                }
+
+            }
+
+            .addOnFailureListener {
+
+                callback(null)
+
+            }
+
+    }
+
 
 
 
 
 }
-

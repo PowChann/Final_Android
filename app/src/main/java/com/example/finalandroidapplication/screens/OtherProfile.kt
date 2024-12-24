@@ -40,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,11 +47,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.utils.showDatePicker
 import com.example.finalandroidapplication.utils.showTimePicker
+import com.example.finalandroidapplication.viewmodel.AppointmentViewModel
 import com.example.finalandroidapplication.viewmodel.ChannelViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -61,6 +60,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 @Composable
 fun OtherProfile(navController: NavHostController, uid: String) {
     val firestore = FirebaseFirestore.getInstance()
+    val viewModel: AppointmentViewModel = viewModel()
     val userData = remember { mutableStateOf<UserModel?>(null) }
     val currentUser = remember { mutableStateOf<UserModel?>(null) }
     val showDialog = remember { mutableStateOf(false) }
@@ -117,19 +117,14 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Image(
-                            painter = if (!user.avatarUrl.isNullOrEmpty()) {
-                                rememberAsyncImagePainter(model = user.avatarUrl)
-                            } else {
-                                painterResource(id = R.drawable.baseline_person_24)
-                            },
+                            painter = painterResource(id = R.drawable.baseline_person_24),
                             contentDescription = "Profile Image",
                             modifier = Modifier
                                 .size(96.dp)
                                 .clip(CircleShape)
                                 .border(2.dp, Color.Gray, CircleShape)
                                 .background(Color.LightGray),
-                            contentScale = ContentScale.Fit,
-                            colorFilter = if (user.avatarUrl.isNullOrEmpty()) ColorFilter.tint(Color.White) else null
+                            colorFilter = ColorFilter.tint(Color.White)
                         )
                     }
 
@@ -460,44 +455,35 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                             },
                             confirmButton = {
                                 Button(onClick = {
-
-                                    if (selectedDate.value.isEmpty() || selectedTime.value.isEmpty()) {
-                                        Toast.makeText(
-                                            navController.context,
-                                            "Please pick your date and time",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    } else {
-                                        val appointmentId = firestore.collection("appointments").document().id
-
-                                        val appointmentData = hashMapOf(
-                                            "appointmentId" to appointmentId,
-                                            "currentUserId" to (currentUser.value?.uid ?: "Unknown"),
-                                            "otherUserId" to (userData.value?.uid ?: "Unknown"),
-                                            "date" to selectedDate.value,
-                                            "time" to selectedTime.value
-                                        )
-
-                                        FirebaseFirestore.getInstance().collection("appointments")
-                                            .document(appointmentId)
-                                            .set(appointmentData)
-                                            .addOnSuccessListener {
+                                    try {
+                                        viewModel.scheduleAppointment(
+                                            selectedDate.value,
+                                            selectedTime.value,
+                                            currentUser.value?.uid,
+                                            userData.value?.uid,
+                                            onSuccess = { date, time ->
                                                 Toast.makeText(
                                                     navController.context,
-                                                    "Appointment scheduled successfully for ${selectedDate.value} at ${selectedTime.value}",
+                                                    "Appointment scheduled successfully for $date at $time",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                                 showDialog.value = false
-                                            }
-                                            .addOnFailureListener { e ->
+                                            },
+                                            onFailure = { e ->
                                                 Toast.makeText(
                                                     navController.context,
                                                     "Failed to schedule appointment: ${e.message}",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             }
+                                        )
+                                    } catch (e: IllegalArgumentException) {
+                                        Toast.makeText(
+                                            navController.context,
+                                            e.message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
-
                                 }) {
                                     Text("Confirm")
                                 }
