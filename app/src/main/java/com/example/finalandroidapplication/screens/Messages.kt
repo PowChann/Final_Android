@@ -1,6 +1,8 @@
 package com.example.finalandroidapplication.screens
 
 
+import android.util.Log
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,30 +36,28 @@ fun Messages(
     navController: NavHostController,
     uid: String
 ) {
-    // Lấy dữ liệu từ ChannelViewModel
+    // ViewModels
     val channelViewModel: ChannelViewModel = viewModel()
+    val profileViewModel: ProfileViewModel = viewModel()
+
+    // Observe channel data
     val channels by channelViewModel.userChannels.observeAsState(emptyList())
 
-    val profileViewModel: ProfileViewModel = viewModel()
-    val usersData by profileViewModel.usersData.observeAsState(emptyList())
+    // Observe user data mapped by channel
+    val channelUsersData by profileViewModel.channelUsersData.observeAsState(emptyMap())
 
-
-    // Trigger fetchChannelsByUser when composable is initialized
+    // Fetch channels when the composable is initialized
     LaunchedEffect(uid) {
         if (uid.isNotBlank()) {
             channelViewModel.fetchChannelsByUser(uid)
         }
     }
 
-    // Trigger profile fetching once channels are loaded
+    // Fetch user profiles for channel participants when channels are loaded
     LaunchedEffect(channels) {
-        // Collect all participants' UIDs
-
-        // For each channel, collect participant UIDs
-        channels.forEach { channel ->
-            channel?.participants?.forEach {
-                profileViewModel.fetchMultipleUsersProfile(channel.participants)
-            }
+        if (channels.isNotEmpty()) {
+            val groups = channels.map { it!!.channelID to it.participants }
+            profileViewModel.fetchGroupedUsersProfiles(groups)
         }
     }
 
@@ -77,16 +77,27 @@ fun Messages(
             )
         },
         content = { padding ->
-
             if (channels.isNotEmpty()) {
                 LazyColumn(
                     modifier = Modifier.padding(padding)
                 ) {
                     items(channels) { channel ->
                         if (channel != null) {
-
-                            // Pass the channel and participants to the ChannelItem
-                             ChannelItem(channel, usersData, navController)
+                            // Check if participants for this channel are loaded
+                            val usersData = channelUsersData[channel.channelID]
+                            if (usersData != null) {
+                                ChannelItem(channel, usersData, navController)
+                            } else {
+                                // Placeholder while loading
+                                Text(
+                                    text = "Loading...",
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                        .fillMaxWidth(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -102,6 +113,13 @@ fun Messages(
         }
     )
 }
+
+
+
+
+
+
+
 
 
 

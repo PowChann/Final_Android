@@ -59,36 +59,63 @@ class ChannelViewModel : ViewModel() {
     }
 
 
-    fun createChannel(participants: List<String>) {
-        if (participants.isEmpty()) {
-            _error.postValue("Participants list cannot be empty")
+    fun createChannel(
+        participants: List<String>,
+        onChannelExists: (String) -> Unit, // Callback khi kênh đã tồn tại
+        onChannelCreated: (String) -> Unit, // Callback khi kênh được tạo mới
+        onError: (String) -> Unit // Callback khi có lỗi
+    ) {
+        if (participants.isEmpty() || participants.size != 2) {
+            onError("Direct messages require exactly two participants.")
             return
         }
 
-        // Generate a unique channel ID
-        val channelID = firestore.collection("channels").document().id
-
-        // Create a ChannelModel object
-        val channel = ChannelModel(
-            channelID = channelID,
-            participants = participants,
-            latestMessageTimestamp = 0L, // No messages yet
-            latestMessage = "" // No latest message initially
-        )
-
-        // Save the channel to Firestore
+        // Query Firestore để kiểm tra kênh đã tồn tại
         firestore.collection("channels")
-            .document(channelID) // Use the generated channel ID
-            .set(channel)
-            .addOnSuccessListener {
-                Log.d("CreateChannel", "Channel created successfully: $channelID")
-                _isCreatedChannel.postValue(true)
-                _success.postValue("Channel created successfully")
+            .whereArrayContains("participants", participants[0]) // Kiểm tra người dùng đầu tiên
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val existingChannel = querySnapshot.documents.firstOrNull { doc ->
+                    val channelParticipants = doc.get("participants") as? List<*>
+                    // Đảm bảo kênh có chính xác hai người tham gia
+                    channelParticipants?.size == 2 && participants.all { it in channelParticipants }
+                }
+
+                if (existingChannel != null) {
+                    val channelID = existingChannel.id
+                    Log.d("CreateChannel", "Direct message channel already exists: $channelID")
+                    onChannelExists(channelID) // Chuyển hướng với ID kênh
+                } else {
+                    // Tạo một ID kênh duy nhất
+                    val channelID = firestore.collection("channels").document().id
+
+                    // Tạo đối tượng ChannelModel
+                    val channel = ChannelModel(
+                        channelID = channelID,
+                        participants = participants,
+                        latestMessageTimestamp = 0L,
+                        latestMessage = ""
+                    )
+
+                    // Lưu kênh vào Firestore
+                    firestore.collection("channels")
+                        .document(channelID)
+                        .set(channel)
+                        .addOnSuccessListener {
+                            Log.d("CreateChannel", "Direct message channel created successfully: $channelID")
+                            onChannelCreated(channelID) // Chuyển hướng với ID kênh mới
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("CreateChannel", "Error creating channel: ${exception.localizedMessage}")
+                            onError("Error creating channel: ${exception.localizedMessage}")
+                        }
+                }
             }
             .addOnFailureListener { exception ->
-                Log.e("CreateChannel", "Error creating channel: ${exception.localizedMessage}")
-                _error.postValue("Error creating channel: ${exception.localizedMessage}")
+                Log.e("CreateChannel", "Error checking for existing channels: ${exception.localizedMessage}")
+                onError("Error checking for existing channels: ${exception.localizedMessage}")
             }
     }
+
 
 }

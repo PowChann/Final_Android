@@ -45,11 +45,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.utils.showDatePicker
 import com.example.finalandroidapplication.utils.showTimePicker
+import com.example.finalandroidapplication.viewmodel.ChannelViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -62,6 +64,8 @@ fun OtherProfile(navController: NavHostController, uid: String) {
     val showDialog = remember { mutableStateOf(false) }
     val selectedDate = remember { mutableStateOf("") }
     val selectedTime = remember { mutableStateOf("") }
+
+    val channelViewModel: ChannelViewModel = viewModel()
 
     // Fetch user to view profile
     LaunchedEffect(uid) {
@@ -145,8 +149,35 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                     ) {
                         Button(
                             onClick = {
-                                // TODO: Implement Text Message functionality
-                                Toast.makeText(navController.context, "Text clicked!", Toast.LENGTH_SHORT).show()
+
+                                val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+                                if (currentUserId != null && userData.value != null) {
+                                    val participants = listOf(currentUserId, userData.value!!.uid)
+                                    channelViewModel.createChannel(
+                                        participants = participants,
+                                        onChannelExists = { channelID ->
+
+                                            navController.navigate("ChannelDetails/$channelID")
+                                        },
+                                        onChannelCreated = { channelID ->
+
+                                            navController.navigate("ChannelDetails/$channelID")
+                                        },
+                                        onError = { errorMessage ->
+                                            Toast.makeText(
+                                                navController.context,
+                                                "Error: $errorMessage",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    )
+                                } else {
+                                    Toast.makeText(
+                                        navController.context,
+                                        "Unable to identify user or target profile!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             },
                             enabled = !isSameUser,
                             modifier = Modifier

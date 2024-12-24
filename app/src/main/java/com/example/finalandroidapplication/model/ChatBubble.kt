@@ -25,7 +25,7 @@ fun ChatBubble(message: MessageModel, usersData: List<UserModel?>) {
         var name = "Unknown User" // Default value
         for (user in usersData) {
             if (user?.uid == message.senderID) {
-                name = user.name
+                name = user.username
                 break // Stop iterating once the match is found
             }
         }

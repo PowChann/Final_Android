@@ -18,6 +18,7 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.auth.User
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import java.util.concurrent.TimeUnit
@@ -25,11 +26,16 @@ import java.util.concurrent.TimeUnit
 class ProfileViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private val auth =  FirebaseAuth.getInstance()
+
     private val _userData = MutableLiveData<UserModel?>()
     val userData: LiveData<UserModel?> = _userData
 
     private val _usersData = MutableLiveData<List<UserModel?>>()
     val usersData : LiveData<List<UserModel?>> = _usersData
+
+
+
+
 
 
     private val _error = MutableLiveData<String>()
@@ -49,6 +55,66 @@ class ProfileViewModel : ViewModel() {
     private val fetchedProfiles = mutableSetOf<String>() // To keep track of profiles we've already fetched
 
     // Function to fetch multiple user profiles based on UIDs
+    private val _channelUsersData = MutableLiveData<Map<String, List<UserModel?>>>()
+    val channelUsersData: LiveData<Map<String, List<UserModel?>>> = _channelUsersData
+
+    fun fetchGroupedUsersProfiles(groups: List<Pair<String, List<String>>>) {
+        _isLoading.postValue(true) // Set loading state to true
+
+        val resultMap = mutableMapOf<String, List<UserModel?>>()
+        var processedGroups = 0
+
+        groups.forEach { (groupId, group) -> // groupId is the channelID or identifier
+            val usersList = mutableListOf<UserModel?>()
+            group.forEach { uid ->
+                firestore.collection("users").document(uid)
+                    .get()
+                    .addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            val data = document.data
+                            val user = UserModel(
+                                uid = data?.get("uid") as? String ?: "",
+                                username = data?.get("username") as? String ?: "",
+                                gender = data?.get("gender") as? String ?: "",
+                                name = data?.get("name") as? String ?: "",
+                                email = data?.get("email") as? String ?: "",
+                                phone = data?.get("phone") as? String ?: "",
+                                career = data?.get("career") as? String ?: "",
+                                age = data?.get("age") as? String ?: "",
+                                bio = data?.get("bio") as? String ?: "",
+                                habits = data?.get("habits") as? Map<String, String> ?: mapOf(),
+                                avatarUrl = data?.get("avatarUrl") as? String ?: "",
+                                isVerified = data?.get("isVerified") as? Boolean ?: false
+                            )
+                            usersList.add(user)
+                        } else {
+                            usersList.add(null)
+                        }
+
+                        // If all users in the group are fetched
+                        if (usersList.size == group.size) {
+                            resultMap[groupId] = usersList
+                            processedGroups++
+
+                            // If all groups are processed, update the LiveData
+                            if (processedGroups == groups.size) {
+                                _channelUsersData.postValue(resultMap)
+                                _isLoading.postValue(false) // Stop loading
+                            }
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        _error.postValue("Failed to fetch user profile for UID $uid: ${exception.message}")
+                        _isLoading.postValue(false) // Stop loading on failure
+                    }
+            }
+        }
+    }
+
+
+
+
+
     fun fetchMultipleUsersProfile(uids: List<String>) {
         _isLoading.postValue(true)  // Set loading state to true
 
@@ -99,6 +165,7 @@ class ProfileViewModel : ViewModel() {
                 }
         }
     }
+
 
 
     fun fetchUserProfile(uid: String) {

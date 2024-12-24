@@ -1,5 +1,6 @@
 package com.example.finalandroidapplication.screens
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -14,18 +15,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 @Composable
 fun ChannelItem(channel: ChannelModel, usersData: List<UserModel?>, navController: NavHostController) {
-    // Participant names with "You" prepended
-    val participantNames = remember(usersData) {
-        buildString {
-            append("You")
 
-            append(
-                usersData
-                    .filterNotNull() // Ensure no null values
-                    .joinToString(", ") { user -> user.name }
-            )
-        }
-    }
+//    Log.d("userdata : " , " "+ usersData)
+    val participantNames = usersData.mapNotNull { it?.username }.joinToString(", ")
+
 
     // Format the timestamp
     val formattedTime = remember(channel.latestMessageTimestamp) {

@@ -46,7 +46,7 @@ fun ChannelDetails(
 
     LaunchedEffect(messages) {
         val senderList = messages.mapNotNull { it?.senderID }.distinct()
-        Log.d("senderList", "${senderList}")
+//        Log.d("senderList", "${senderList}")
         profileViewModel.fetchMultipleUsersProfile(senderList)
 
     }
@@ -95,7 +95,7 @@ fun ChannelDetails(
                 ) {
                     items(messages) { message ->
                         if (message != null) {
-                            Log.d("usersData", "${usersData}")
+
                             ChatBubble(message = message , usersData)
                         }
                     }
