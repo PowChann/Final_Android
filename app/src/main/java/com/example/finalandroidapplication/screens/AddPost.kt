@@ -31,6 +31,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.viewmodel.PostViewModel
@@ -59,11 +61,18 @@ fun AddPost(navController: NavHostController, uid: String) {
     val postViewModel: PostViewModel = viewModel()
     val profileViewModel: ProfileViewModel = viewModel()
     var username by remember { mutableStateOf("Loading...") }
+    var avatarUrl by remember { mutableStateOf<String?>(null) }
     var postDes by remember { mutableStateOf("") }
+    val userData by profileViewModel.userData.observeAsState()
 
     LaunchedEffect(Unit) {
-        profileViewModel.fetchUsername(uid) { fetchedUsername ->
-            username = fetchedUsername ?: "Unknown User"
+        profileViewModel.fetchUserProfile(uid)
+    }
+
+    LaunchedEffect(userData) {
+        userData?.let {
+            username = it.username
+            avatarUrl = it.avatarUrl
         }
     }
 
@@ -99,14 +108,18 @@ fun AddPost(navController: NavHostController, uid: String) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.baseline_person_24),
+                        painter = if (!avatarUrl.isNullOrEmpty()) {
+                            rememberAsyncImagePainter(model = avatarUrl)
+                        } else {
+                            painterResource(id = R.drawable.baseline_person_24)
+                        },
                         contentDescription = "Avatar",
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
                             .border(2.dp, Color.Gray, CircleShape)
-                            .background(Color.LightGray),
-                        colorFilter = ColorFilter.tint(Color.White)
+                            .background(Color.White),
+                        colorFilter = if (avatarUrl.isNullOrEmpty()) ColorFilter.tint(Color.White) else null
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(

@@ -1,6 +1,7 @@
 package com.example.finalandroidapplication.viewmodel
 
 import android.widget.Toast
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.FirebaseFirestore
@@ -8,14 +9,21 @@ import java.util.*
 
 class PostViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
-    private val _isPosted = MutableLiveData<Boolean>()
-    private val _isHouseAdded = MutableLiveData<Boolean>()
 
+    private val _isPosted = MutableLiveData<Boolean>()
+    val isPosted: LiveData<Boolean> get() = _isPosted
+
+    private val _isHouseAdded = MutableLiveData<Boolean>()
+    val isHouseAdded: LiveData<Boolean> get() = _isHouseAdded
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> get() = _isLoading
 
     fun uploadPost(
         postDes: String,
         userId: String
     ) {
+        _isLoading.postValue(true)
         val postId = UUID.randomUUID().toString()
         val timestamp = System.currentTimeMillis().toString()
 
@@ -31,8 +39,11 @@ class PostViewModel : ViewModel() {
             .addOnSuccessListener {
                 _isPosted.postValue(true)
             }
-            .addOnFailureListener { exception ->
+            .addOnFailureListener {
                 _isPosted.postValue(false)
+            }
+            .addOnCompleteListener {
+                _isLoading.postValue(false)
             }
     }
 
@@ -42,12 +53,14 @@ class PostViewModel : ViewModel() {
         price: String,
         roomType: String,
         numOfPeople: String,
-        amenities: Set<String>
+        amenities: Set<String>,
+        imageUrl: String?
     ) {
+        _isLoading.postValue(true)
         val houseId = UUID.randomUUID().toString()
         val timestamp = System.currentTimeMillis().toString()
 
-        val houseData = mapOf(
+        val houseData = mutableMapOf(
             "userId" to userId,
             "houseId" to houseId,
             "location" to location,
@@ -57,6 +70,9 @@ class PostViewModel : ViewModel() {
             "amenities" to amenities.toList(),
             "timestamp" to timestamp
         )
+        if (imageUrl != null) {
+            houseData["imageUrl"] = imageUrl
+        }
 
         firestore.collection("houses").document(houseId)
             .set(houseData)
@@ -65,6 +81,9 @@ class PostViewModel : ViewModel() {
             }
             .addOnFailureListener {
                 _isHouseAdded.postValue(false)
+            }
+            .addOnCompleteListener {
+                _isLoading.postValue(false)
             }
     }
 

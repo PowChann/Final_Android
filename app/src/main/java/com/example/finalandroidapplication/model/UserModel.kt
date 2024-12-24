@@ -12,7 +12,7 @@ data class UserModel(
     val age: String = "",
     val bio: String = "",
     val habits: Map<String, String> = mapOf(),
-    val avatarUrl: String = "",
+    val avatarUrl: String? = null,
     val isVerified: Boolean = false,
     val isRoommate: Boolean = false,
     val rating: Double = 5.0

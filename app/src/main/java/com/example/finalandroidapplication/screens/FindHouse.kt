@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -64,6 +65,7 @@ import com.example.finalandroidapplication.viewmodel.HouseViewModel
 fun FindHouse(navController: NavHostController) {
     val houseViewModel: HouseViewModel = viewModel()
     val housesAndUsers by houseViewModel.houses.observeAsState(emptyList())
+    val isLoading by houseViewModel.isLoading.observeAsState(initial = true)
 
     var showFilterDialog by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("") }
@@ -115,9 +117,18 @@ fun FindHouse(navController: NavHostController) {
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                LazyColumn {
-                    items(housesAndUsers) { (house, user) ->
-                        HouseItem(house, user, navController)
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyColumn {
+                        items(housesAndUsers) { (house, user) ->
+                            HouseItem(house, user, navController)
+                        }
                     }
                 }
             //AlertDialog

@@ -16,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
 
 @Composable
@@ -48,14 +50,22 @@ fun PostItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.baseline_person_24),
+                    painter = if (!users.avatarUrl.isNullOrEmpty()) {
+                        rememberAsyncImagePainter(model = users.avatarUrl)
+                    } else {
+                        painterResource(id = R.drawable.baseline_person_24)
+                    },
                     contentDescription = "Avatar",
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
                         .border(2.dp, Color.Gray, CircleShape)
-                        .background(Color.LightGray),
-                    colorFilter = ColorFilter.tint(Color.White)
+                        .background(Color.White)
+                        .clickable {
+                            navHostController.navigate("OtherProfile/${users.uid}")
+                        },
+                    contentScale = ContentScale.Crop,
+                    colorFilter = if (users.avatarUrl.isNullOrEmpty()) ColorFilter.tint(Color.White) else null
                 )
                 Spacer(modifier = Modifier.size(16.dp))
                 Column(modifier = Modifier.weight(1f)) {

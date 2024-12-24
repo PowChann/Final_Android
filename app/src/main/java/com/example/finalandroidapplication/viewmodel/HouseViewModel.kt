@@ -20,8 +20,11 @@ class HouseViewModel : ViewModel() {
 
     private val _filteredHouses = MutableLiveData<List<HouseModel>>()
     val filteredHouses: LiveData<List<HouseModel>> = _filteredHouses
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
 
     fun fetchHousesWithUsers() {
+        _isLoading.postValue(true)
         firestore.collection("houses")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
@@ -54,11 +57,14 @@ class HouseViewModel : ViewModel() {
                     }
                     Log.d("HouseViewModel", "Fetched houses: ${housesAndUsersList.size}")
                     _houses.postValue(housesAndUsersList)
+                    _isLoading.postValue(false)
+
                 }
             }
             .addOnFailureListener { exception ->
                 Log.e("HouseViewModel", "Error fetching houses: ${exception.message}")
                 _houses.postValue(emptyList())
+                _isLoading.postValue(false)
             }
     }
 
@@ -70,6 +76,7 @@ class HouseViewModel : ViewModel() {
         numOfPeople: String? = null,
         amenities: List<String>? = null
     ) {
+        _isLoading.postValue(true)
         viewModelScope.launch {
             try {
                 val houseSnapshot = firestore.collection("houses").get().await()
@@ -118,10 +125,14 @@ class HouseViewModel : ViewModel() {
                 }
 
                 _houses.postValue(houseUserPairs)
+                _isLoading.postValue(false)
 
             } catch (e: Exception) {
                 Log.e("HouseViewModel", "Error searching houses: ${e.message}")
                 _houses.postValue(emptyList())
+            }finally {
+                _isLoading.postValue(false)
+
             }
         }
     }

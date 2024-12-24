@@ -2,6 +2,7 @@ package com.example.finalandroidapplication.screens
 
 import android.app.Activity
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,6 +48,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -84,8 +86,9 @@ fun Profile(navController: NavHostController, uid: String) {
     var verificationId by remember { mutableStateOf("") }
 
 
-
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
         avatarUrl = uri
     }
 
@@ -149,22 +152,33 @@ fun Profile(navController: NavHostController, uid: String) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = if (!user?.avatarUrl.isNullOrEmpty()) {
-                        rememberAsyncImagePainter(model = user?.avatarUrl)
-                    } else {
-                        painterResource(id = R.drawable.baseline_person_24) // Ảnh mặc định
-                    },
+                    painter = rememberAsyncImagePainter(
+                        model = when {
+                            avatarUrl != null -> avatarUrl
+                            user?.avatarUrl?.isNotBlank() == true -> user?.avatarUrl
+                            else -> null
+                        }
+                    ),
                     contentDescription = "Profile Image",
                     modifier = Modifier
                         .size(96.dp)
                         .clip(CircleShape)
                         .border(2.dp, Color.Gray, CircleShape)
-                        .background(Color.LightGray)
-                        .clickable(isEditing) {
-                            launcher.launch("image/*")
-                        },
-                    colorFilter = ColorFilter.tint(Color.White)
+                        .background(Color.White)
+                        .then(
+                            if (isEditing) {
+                                Modifier.clickable {
+                                    launcher.launch("image/*")
+                                }
+                            } else {
+                                Modifier
+                            }
+                        ),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = if (avatarUrl == null) ColorFilter.tint(Color.White) else null
                 )
+
+
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
@@ -392,9 +406,16 @@ fun Profile(navController: NavHostController, uid: String) {
                 Button(
                     onClick = {
                         if (isEditing) {
+                            // Chỉ upload ảnh nếu người dùng chọn ảnh mới
+                            val imageUriToUpload = if (avatarUrl != null && avatarUrl!!.scheme in listOf("content", "file")) {
+                                avatarUrl
+                            } else {
+                                null
+                            }
+
                             profileViewModel.uploadImageAndSaveProfile(
                                 uid = uid,
-                                imageUri = avatarUrl,
+                                imageUri = imageUriToUpload,
                                 name = name,
                                 gender = gender,
                                 phone = phone,
@@ -402,11 +423,16 @@ fun Profile(navController: NavHostController, uid: String) {
                                 age = age,
                                 bio = bio,
                                 username = username,
-                                habits = habits
-                            ) {
-                                isEditing = false
-                            }
-
+                                habits = habits,
+                                onSuccess = {
+                                    isEditing = false
+                                    profileViewModel.fetchUserProfile(uid)
+                                    Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                                },
+                                onError = { errorMessage ->
+                                    Toast.makeText(context, "Failed to update profile: $errorMessage", Toast.LENGTH_SHORT).show()
+                                }
+                            )
                         } else {
                             isEditing = true
                         }

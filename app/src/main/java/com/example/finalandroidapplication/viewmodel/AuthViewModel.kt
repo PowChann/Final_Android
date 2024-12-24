@@ -74,6 +74,7 @@ class AuthViewModel : ViewModel() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null) {
+                        val defaultAvatarUrl = "https://firebasestorage.googleapis.com/v0/b/final-android-application.firebasestorage.app/o/avatars%2Fdefault.png?alt=media&token=c0c1dd69-b392-40e7-abfb-44369366ab9d"
                         val defaultHabits = mapOf(
                             "Diet" to "",
                             "Pets" to "",
@@ -93,7 +94,7 @@ class AuthViewModel : ViewModel() {
                             "career" to "",
                             "age" to "",
                             "bio" to "",
-                            "avatarUrl" to "",
+                            "avatarUrl" to defaultAvatarUrl,
                             "habits" to defaultHabits,
                             "isVerified" to isVerified,
                             "isRoommate" to isRoommate,
@@ -114,6 +115,7 @@ class AuthViewModel : ViewModel() {
                 }
             }
     }
+
 
     fun logout() {
         auth.signOut()

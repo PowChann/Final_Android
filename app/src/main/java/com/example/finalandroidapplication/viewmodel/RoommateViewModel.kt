@@ -23,7 +23,11 @@ class RoommateViewModel : ViewModel() {
     private val _success = MutableLiveData<String>()
     val success: LiveData<String> = _success
 
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+
     fun fetchAllPostsWithUsers() {
+        _isLoading.postValue(true)
         firestore.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
@@ -44,18 +48,22 @@ class RoommateViewModel : ViewModel() {
                             }
                         }
                     }
-
                     _postsAndUsers.postValue(postsList)
                 }
             }
             .addOnFailureListener { exception ->
-
+                _error.postValue("Error fetching posts: ${exception.message}")
+            }
+            .addOnCompleteListener {
+                _isLoading.postValue(false)
             }
     }
 
     fun fetchCurrentUser(onResult: (UserModel?) -> Unit) {
+        _isLoading.postValue(true)
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
         if (currentUserId == null) {
+            _isLoading.postValue(false)
             onResult(null)
             return
         }
@@ -69,18 +77,20 @@ class RoommateViewModel : ViewModel() {
                 _error.postValue("Failed to fetch current user: ${it.message}")
                 onResult(null)
             }
+            .addOnCompleteListener {
+                _isLoading.postValue(false)
+            }
     }
 
     fun fetchUsersWithSimilarHabits(currentUserHabits: Map<String, String>, onResult: (List<UserModel>) -> Unit) {
+        _isLoading.postValue(true)
         firestore.collection("users").get()
             .addOnSuccessListener { documents ->
                 val matchedUsers = documents.mapNotNull { document ->
                     val user = document.toObject(UserModel::class.java)
 
-                    // Loại bỏ người dùng hiện tại khỏi danh sách
                     if (user.uid == FirebaseAuth.getInstance().currentUser?.uid) return@mapNotNull null
 
-                    // Lọc dựa trên habits
                     val userHabits = user.habits.filterValues { it.isNotBlank() }
                     if (userHabits.isNotEmpty() && currentUserHabits.entries.any { entry ->
                             userHabits.containsValue(entry.value)
@@ -97,20 +107,22 @@ class RoommateViewModel : ViewModel() {
                 _error.postValue("Failed to fetch users: ${e.message}")
                 onResult(emptyList())
             }
+            .addOnCompleteListener {
+                _isLoading.postValue(false)
+            }
     }
 
     fun fetchPostsForMatchedUsers(
         matchedUsers: List<UserModel>,
         onResult: (List<Pair<PostModel, UserModel>>) -> Unit
     ) {
+        _isLoading.postValue(true)
         val postsWithUsers = mutableListOf<Pair<PostModel, UserModel>>()
 
-        // Lấy danh sách các bài đăng
         firestore.collection("posts").get()
             .addOnSuccessListener { postDocs ->
                 val allPosts = postDocs.map { it.toObject(PostModel::class.java) }
 
-                // Tìm bài đăng khớp với người dùng phù hợp
                 for (user in matchedUsers) {
                     val userPosts = allPosts.filter { it.userId == user.uid }
                     userPosts.forEach { post ->
@@ -123,8 +135,8 @@ class RoommateViewModel : ViewModel() {
                 _error.postValue("Failed to fetch posts for matched users: ${it.message}")
                 onResult(emptyList())
             }
+            .addOnCompleteListener {
+                _isLoading.postValue(false)
+            }
     }
-
-
-
 }

@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.utils.showDatePicker
@@ -115,14 +117,19 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.baseline_person_24),
+                            painter = if (!user.avatarUrl.isNullOrEmpty()) {
+                                rememberAsyncImagePainter(model = user.avatarUrl)
+                            } else {
+                                painterResource(id = R.drawable.baseline_person_24)
+                            },
                             contentDescription = "Profile Image",
                             modifier = Modifier
                                 .size(96.dp)
                                 .clip(CircleShape)
                                 .border(2.dp, Color.Gray, CircleShape)
                                 .background(Color.LightGray),
-                            colorFilter = ColorFilter.tint(Color.White)
+                            contentScale = ContentScale.Fit,
+                            colorFilter = if (user.avatarUrl.isNullOrEmpty()) ColorFilter.tint(Color.White) else null
                         )
                     }
 

@@ -8,5 +8,6 @@ data class HouseModel(
     val roomType: String = "",
     val numOfPeople: String = "",
     val amenities: List<String> = emptyList(),
-    val timestamp: String = ""
+    val timestamp: String = "",
+    val imageUrl: String? = null
 )

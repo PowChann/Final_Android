@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -42,43 +43,38 @@ import com.example.finalandroidapplication.viewmodel.RoommateViewModel
 @Composable
 fun FindRoommate(navController: NavHostController) {
     val roommateViewModel: RoommateViewModel = viewModel()
-    val profileViewModel: ProfileViewModel = viewModel()
-    val postsAndUsers by roommateViewModel.postsAndUsers.observeAsState(emptyList()) //Fetch all posts
-    val matchedUsers = remember { mutableStateListOf<UserModel>() } //Fetch similar posts
+    val isLoading by roommateViewModel.isLoading.observeAsState(false)
+    val postsAndUsers by roommateViewModel.postsAndUsers.observeAsState(emptyList())
+    val matchedUsers = remember { mutableStateListOf<UserModel>() }
     val matchedPosts = remember { mutableStateListOf<Pair<PostModel, UserModel>>() }
     val currentUser = remember { mutableStateOf<UserModel?>(null) }
-    val isMatchedPostsEmpty = remember { mutableStateOf(true) } // Check if matched
+    val isMatchedPostsEmpty = remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         roommateViewModel.fetchCurrentUser { user ->
             currentUser.value = user
             if (user != null) {
-                // Lọc danh sách người dùng phù hợp
                 roommateViewModel.fetchUsersWithSimilarHabits(user.habits) { users ->
                     matchedUsers.clear()
                     matchedUsers.addAll(users)
 
                     if (users.isNotEmpty()) {
-                        // Nếu có người dùng phù hợp, tải bài đăng của họ
                         roommateViewModel.fetchPostsForMatchedUsers(users) { posts ->
                             matchedPosts.clear()
                             matchedPosts.addAll(posts)
-                            isMatchedPostsEmpty.value = posts.isEmpty() // Kiểm tra matchedPosts
+                            isMatchedPostsEmpty.value = posts.isEmpty()
                         }
                     } else {
-                        // Nếu không có người dùng phù hợp, tải tất cả các bài đăng
                         isMatchedPostsEmpty.value = true
                         roommateViewModel.fetchAllPostsWithUsers()
                     }
                 }
             } else {
-                // Nếu không có người dùng hiện tại, tải tất cả bài đăng
                 isMatchedPostsEmpty.value = true
                 roommateViewModel.fetchAllPostsWithUsers()
             }
         }
     }
-
 
     Scaffold(
         topBar = {
@@ -111,38 +107,40 @@ fun FindRoommate(navController: NavHostController) {
             }
         },
         content = { padding ->
-
-            if (isMatchedPostsEmpty.value) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                ) {
-                    items(postsAndUsers) { (post, user) ->
-                        PostItem(
-                            post = post,
-                            users = user,
-                            navHostController = navController
-                        )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator()
+                } else if (isMatchedPostsEmpty.value) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(postsAndUsers) { (post, user) ->
+                            PostItem(
+                                post = post,
+                                users = user,
+                                navHostController = navController
+                            )
+                        }
                     }
-                }
-
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                ) {
-                    items(matchedPosts) { (post, user) ->
-                        PostItem(
-                            post = post,
-                            users = user,
-                            navHostController = navController
-                        )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(matchedPosts) { (post, user) ->
+                            PostItem(
+                                post = post,
+                                users = user,
+                                navHostController = navController
+                            )
+                        }
                     }
                 }
             }
-
         }
     )
 }

@@ -20,6 +20,7 @@ import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.auth.User
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.ktx.storage
 import java.util.concurrent.TimeUnit
 
@@ -49,10 +50,6 @@ class ProfileViewModel : ViewModel() {
 
     private var storedVerificationId: String? = null
 
-
-
-
-    private val fetchedProfiles = mutableSetOf<String>() // To keep track of profiles we've already fetched
 
     // Function to fetch multiple user profiles based on UIDs
     private val _channelUsersData = MutableLiveData<Map<String, List<UserModel?>>>()
@@ -223,34 +220,29 @@ class ProfileViewModel : ViewModel() {
         username: String,
         avatarUrl: String?,
         habits: Map<String, String>
-
     ) {
         if (uid.isBlank()) {
             _error.postValue("Invalid user ID")
             return
         }
 
-        val updatedUser = mutableMapOf<String, Any>(
-            "name" to name,
-            "gender" to gender,
-            "phone" to phone,
-            "career" to career,
-            "age" to age,
-            "bio" to bio,
-            "username" to username,
-            "habits" to (habits.ifEmpty { emptyMap<String, String>() })
-        )
-        // Chỉ thêm URL ảnh nếu không null
-        if (!avatarUrl.isNullOrBlank()) {
-            updatedUser["avatarUrl"] = avatarUrl
-        }
+        val updatedUser = mutableMapOf<String, Any?>(
+            "name" to name.takeIf { it.isNotBlank() },
+            "gender" to gender.takeIf { it.isNotBlank() },
+            "phone" to phone.takeIf { it.isNotBlank() },
+            "career" to career.takeIf { it.isNotBlank() },
+            "age" to age.takeIf { it.isNotBlank() },
+            "bio" to bio.takeIf { it.isNotBlank() },
+            "username" to username.takeIf { it.isNotBlank() },
+            "avatarUrl" to avatarUrl,
+            "habits" to (habits.ifEmpty { null })
+        ).filterValues { it != null } // Loại bỏ các giá trị null hoặc rỗng
 
         firestore.collection("users").document(uid)
             .update(updatedUser)
             .addOnSuccessListener {
                 _success.postValue("Profile updated successfully")
                 fetchUserProfile(uid)
-
             }
             .addOnFailureListener { exception ->
                 _error.postValue("Failed to update user data: ${exception.message}")
@@ -269,44 +261,43 @@ class ProfileViewModel : ViewModel() {
         bio: String,
         username: String,
         habits: Map<String, String>,
-        onComplete: (Boolean) -> Unit
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
     ) {
-        if (imageUri != null) {
-            val storageRef = Firebase.storage.reference.child("avatars/$uid.jpg")
-            storageRef.putFile(imageUri)
-                .addOnSuccessListener {
-                    storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                        updateUserProfile(uid, name, gender, phone, career, age, bio, username, downloadUrl.toString(), habits)
-                        onComplete(true)
-                    }
-                }
-                .addOnFailureListener {
-                    _error.postValue("Failed to upload image: ${it.message}")
-                    updateUserProfile(uid, name, gender, phone, career, age, bio, username, null, habits)
-                    onComplete(false)
-                }
-        } else {
+        if (imageUri == null) {
+            // Nếu không có ảnh mới, chỉ cập nhật thông tin người dùng
             updateUserProfile(uid, name, gender, phone, career, age, bio, username, null, habits)
-            onComplete(true)
+            onSuccess()
+            return
         }
-    }
 
+        // Kiểm tra nếu `imageUri` là local Uri
+        if (imageUri.scheme != "content" && imageUri.scheme != "file") {
+            onError("Invalid image URI: The URI must be a local file or content URI.")
+            return
+        }
 
-    fun fetchUsername(uid: String, callback: (String?) -> Unit) {
-        firestore.collection("users").document(uid)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val username = document.getString("username")
-                    callback(username)
-                } else {
-                    callback(null)
+        val storageRef = FirebaseStorage.getInstance().reference
+        val avatarRef = storageRef.child("avatars/$uid.jpg")
+
+        avatarRef.putFile(imageUri)
+            .addOnSuccessListener {
+                avatarRef.downloadUrl.addOnSuccessListener { uri ->
+                    val avatarUrl = uri.toString()
+                    Log.d("ProfileViewModel", "Image uploaded successfully: $avatarUrl")
+
+                    // Cập nhật thông tin người dùng với URL mới
+                    updateUserProfile(uid, name, gender, phone, career, age, bio, username, avatarUrl, habits)
+                    onSuccess()
                 }
             }
-            .addOnFailureListener {
-                callback(null)
+            .addOnFailureListener { exception ->
+                Log.e("ProfileViewModel", "Failed to upload image: ${exception.message}")
+                onError("Failed to upload image: ${exception.message}")
             }
     }
+
+
 
     fun sendOTP(
         activity: Activity,

@@ -59,7 +59,9 @@ dependencies {
     implementation ("androidx.work:work-runtime-ktx:2.8.0")
 
     val nav_version = "2.8.4"
-
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-ktor2:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.4")
     implementation ("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:$nav_version")
     implementation("androidx.compose.runtime:runtime:1.7.5")

@@ -1,8 +1,14 @@
 package com.example.finalandroidapplication.screens
 
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -33,36 +41,50 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil3.compose.rememberAsyncImagePainter
+import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.viewmodel.PostViewModel
+import com.google.firebase.storage.FirebaseStorage
+import java.util.UUID
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddHouse(navController: NavHostController, uid: String) {
     val postViewModel: PostViewModel = viewModel()
+    val isHouseAdded by postViewModel.isHouseAdded.observeAsState()
 
     var location by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var roomType by remember { mutableStateOf("Private") }
     var numOfPeople by remember { mutableStateOf("") }
     val selectedAmenities = remember { mutableStateListOf<String>() }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val context = LocalContext.current
 
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri
+    }
 
 
 
@@ -88,9 +110,45 @@ fun AddHouse(navController: NavHostController, uid: String) {
                     .background(Color.White)
                     .padding(padding)
                     .padding(16.dp),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Start
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (selectedImageUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(selectedImageUri),
+                        contentDescription = "Selected Image",
+                        modifier = Modifier
+                            .size(200.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .border(2.dp, Color.Gray)
+                            .background(Color.LightGray)
+                    )
+                } else {
+                    Text(
+                        text = "No image selected",
+                        modifier = Modifier.padding(16.dp),
+                        color = Color.Gray,
+                        fontSize = 16.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        imagePickerLauncher.launch("image/*")
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_attachment_24),
+                        contentDescription = "Attach Icon",
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Attach Image")
+                }
+
+
                 // Location
                 TextField(
                     value = location,
@@ -251,21 +309,49 @@ fun AddHouse(navController: NavHostController, uid: String) {
                                 Toast.LENGTH_SHORT
                             ).show()
                         } else {
-                            postViewModel.uploadHouse(
-                                uid,
-                                location,
-                                price,
-                                roomType,
-                                numOfPeople,
-                                selectedAmenities.toSet()
-                            )
-                            navController.popBackStack()
+                            if (selectedImageUri != null) {
+                                val storageRef = FirebaseStorage.getInstance().reference
+                                val imageRef = storageRef.child("house_images/${UUID.randomUUID()}.jpg")
+
+                                imageRef.putFile(selectedImageUri!!)
+                                    .addOnSuccessListener {
+                                        imageRef.downloadUrl.addOnSuccessListener { uri ->
+                                            val imageUrl = uri.toString()
+                                            postViewModel.uploadHouse(
+                                                uid,
+                                                location,
+                                                price,
+                                                roomType,
+                                                numOfPeople,
+                                                selectedAmenities.toSet(),
+                                                imageUrl
+                                            )
+                                            navController.popBackStack()
+                                        }
+                                    }
+                                    .addOnFailureListener { exception ->
+                                        Toast.makeText(context, "Failed to upload image: ${exception.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            } else {
+                                // Nếu không có ảnh được chọn, gửi null làm imageUrl
+                                postViewModel.uploadHouse(
+                                    uid,
+                                    location,
+                                    price,
+                                    roomType,
+                                    numOfPeople,
+                                    selectedAmenities.toSet(),
+                                    null
+                                )
+                                navController.popBackStack()
+                            }
                         }
                     },
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text("Submit", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
+
             }
         }
     )
