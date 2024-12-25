@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.navigation.NavHostController
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AppSettingsAlt
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.LocalOffer
@@ -33,6 +34,7 @@ fun NotificationItem(
         notification.actionUrl?.let {
             // Add logic to handle action URL, for example, navigate
             // navHostController.navigate(it) or open the URL
+            navHostController.navigate(it)
         }
     }
 
@@ -117,6 +119,16 @@ fun NotificationItem(
                     Icon(
                         imageVector = Icons.Filled.PersonAdd, // Partner icon
                         contentDescription = "Partner Notification",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .padding(end = 16.dp)
+                    )
+                }
+
+                NotificationType.APPOINTMENT -> {
+                    Icon(
+                        imageVector = Icons.Filled.CalendarMonth,
+                        contentDescription = "Appointment Notification",
                         modifier = Modifier
                             .size(40.dp)
                             .padding(end = 16.dp)

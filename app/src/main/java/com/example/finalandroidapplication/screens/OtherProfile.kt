@@ -51,14 +51,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
+import com.example.finalandroidapplication.model.NotificationModel
 import com.example.finalandroidapplication.model.UserModel
+import com.example.finalandroidapplication.navigation.Routes
 import com.example.finalandroidapplication.utils.showDatePicker
 import com.example.finalandroidapplication.utils.showTimePicker
 import com.example.finalandroidapplication.viewmodel.AppointmentViewModel
 import com.example.finalandroidapplication.viewmodel.ChannelViewModel
+import com.example.finalandroidapplication.viewmodel.NotificationViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,6 +77,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
     val selectedTime = remember { mutableStateOf("") }
 
     val channelViewModel: ChannelViewModel = viewModel()
+    val notificationViewModel : NotificationViewModel = viewModel()
 
     // Fetch user to view profile
     LaunchedEffect(uid) {
@@ -227,74 +233,153 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                     // Add Roommate Button
                     Button(
                         onClick = {
+
                             val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+
                             val roommateId = userData.value?.uid
 
+
+
                             if (currentUserId != null && roommateId != null) {
+
                                 val roommatesRef = firestore.collection("roommates").document(currentUserId)
 
+
+
                                 roommatesRef.get()
+
                                     .addOnSuccessListener { document ->
+
                                         if (document.exists()) {
-                                            roommatesRef.update("roommates", FieldValue.arrayUnion(roommateId))
-                                                .addOnSuccessListener {
-                                                    Toast.makeText(
-                                                        navController.context,
-                                                        "Added roommate successfully!",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
-                                                .addOnFailureListener { exception ->
-                                                    Toast.makeText(
-                                                        navController.context,
-                                                        "Failed to add roommate: ${exception.message}",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
-                                        } else {
-                                            val data = mapOf(
-                                                "owner" to currentUserId,
-                                                "roommates" to listOf(roommateId)
+
+                                            // Ensure owner is also in the roommates list
+
+                                            roommatesRef.update(
+
+                                                "roommates",
+
+                                                FieldValue.arrayUnion(currentUserId, roommateId) // Add both owner and roommate
+
                                             )
-                                            roommatesRef.set(data)
+
                                                 .addOnSuccessListener {
+
                                                     Toast.makeText(
+
                                                         navController.context,
+
                                                         "Added roommate successfully!",
+
                                                         Toast.LENGTH_SHORT
+
                                                     ).show()
+
                                                 }
+
                                                 .addOnFailureListener { exception ->
+
                                                     Toast.makeText(
+
                                                         navController.context,
+
                                                         "Failed to add roommate: ${exception.message}",
+
                                                         Toast.LENGTH_SHORT
+
                                                     ).show()
+
                                                 }
+
+                                        } else {
+
+                                            // Create new document with both owner and roommate
+
+                                            val data = mapOf(
+
+                                                "owner" to currentUserId,
+
+                                                "roommates" to listOf(currentUserId, roommateId) // Include owner and roommate
+
+                                            )
+
+                                            roommatesRef.set(data)
+
+                                                .addOnSuccessListener {
+
+                                                    Toast.makeText(
+
+                                                        navController.context,
+
+                                                        "Added roommate successfully!",
+
+                                                        Toast.LENGTH_SHORT
+
+                                                    ).show()
+
+                                                }
+
+                                                .addOnFailureListener { exception ->
+
+                                                    Toast.makeText(
+
+                                                        navController.context,
+
+                                                        "Failed to add roommate: ${exception.message}",
+
+                                                        Toast.LENGTH_SHORT
+
+                                                    ).show()
+
+                                                }
+
                                         }
+
                                     }
+
                                     .addOnFailureListener { exception ->
+
                                         Toast.makeText(
+
                                             navController.context,
+
                                             "Failed to fetch roommates data: ${exception.message}",
+
                                             Toast.LENGTH_SHORT
+
                                         ).show()
+
                                     }
+
                             } else {
+
                                 Toast.makeText(
+
                                     navController.context,
+
                                     "Unable to identify user or target profile!",
+
                                     Toast.LENGTH_SHORT
+
                                 ).show()
+
                             }
+
                         },
+
                         enabled = !isSameUser,
+
                         modifier = Modifier
+
                             .fillMaxWidth()
+
                             .padding(horizontal = 16.dp)
+
                             .height(56.dp)
+
                     ) {
+
                         Text("Add Roommate", fontSize = 18.sp)
+
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -521,6 +606,97 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             }
+                                        )
+
+
+                                        // Convert selectedDate and selectedTime to timestamp
+
+                                        val combinedTimestamp: Long = try {
+
+                                            // Combine date and time into a single string
+
+                                            val dateTimeStr = "${selectedDate.value.trim()} ${selectedTime.value.trim()}"
+
+
+
+                                            // Use the correct format for dd/MM/yyyy and HH:mm
+
+                                            val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+
+
+
+                                            // Parse the date-time string into a Date object
+
+                                            val date = formatter.parse(dateTimeStr)
+
+
+
+                                            // Convert the Date object to a timestamp in Long (milliseconds since epoch)
+
+                                            date.time
+
+
+
+                                        } catch (e: Exception) {
+
+                                            e.printStackTrace()
+
+                                            System.currentTimeMillis() // Fallback to current timestamp in case of error
+
+                                        }
+
+                                        //Push notifications with converted timestamp
+
+                                        notificationViewModel.pushNotification(
+
+                                            currentUser.value!!.uid,
+
+                                            "APPOINTMENT",
+
+                                            "New appointment",
+
+                                            "You have a new appointment with ${userData.value!!.username}",
+
+                                            "${Routes.Schedule.routes}/${currentUser.value!!.uid}",
+
+                                            System.currentTimeMillis().toString() // Current timestamp for the first notification
+
+                                        )
+
+
+
+                                        notificationViewModel.pushNotification(
+
+                                            currentUser.value!!.uid,
+
+                                            "APPOINTMENT",
+
+                                            "Appointment",
+
+                                            "You have an appointment with ${userData.value!!.username}",
+
+                                            "${Routes.Schedule.routes}/${currentUser.value!!.uid}",
+
+                                            combinedTimestamp.toString()
+
+                                        )
+
+
+
+                                        notificationViewModel.pushNotification(
+
+                                            userData.value!!.uid,
+
+                                            "APPOINTMENT",
+
+                                            "Appointment",
+
+                                            "You have an appointment with ${currentUser.value!!.username}",
+
+                                            "${Routes.Schedule.routes}/${userData.value!!.uid}",
+
+                                            combinedTimestamp.toString()
+
                                         )
                                     } catch (e: IllegalArgumentException) {
                                         Toast.makeText(

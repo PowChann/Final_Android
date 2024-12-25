@@ -27,24 +27,37 @@ class NotificationViewModel : ViewModel() {
     private val _userNotifications = MutableLiveData<List<NotificationModel?>>()
     val userNotifications : LiveData<List<NotificationModel?>> = _userNotifications
 
-    fun fetchNotificationByUid(uid : String) {
+    val currentTime = System.currentTimeMillis()
+
+    fun fetchNotificationByUid(uid: String) {
         if (uid.isBlank()) {
             _error.postValue("User ID is invalid")
             return
         }
         Log.d("FetchNotification", "Fetching notifications for user ID: $uid")
+
         firestore.collection("notifications")
-            .whereEqualTo("userId", uid)
-            .orderBy("timeStamp", Query.Direction.DESCENDING)
+            .whereEqualTo("userId", uid) // Filter by user ID
+            .orderBy("timeStamp", Query.Direction.DESCENDING) // Order by timeStamp
             .get()
             .addOnSuccessListener { querySnapshot ->
-                // Map Firestore documents to NotificationModel
                 Log.d("FetchNotification", "Query successful. Found ${querySnapshot.size()} notifications.")
+
+                // Filter notifications based on the triggerTimeStamp
                 val notifications = querySnapshot.documents.mapNotNull { document ->
-                    document.toObject(NotificationModel::class.java)
+                    val notification = document.toObject(NotificationModel::class.java)
+                    notification?.let {
+                        val triggerTimeStamp = notification.triggerTimeStamp?.toLongOrNull()
+                        // Add only notifications with triggerTimeStamp <= currentTime
+                        if (triggerTimeStamp != null && triggerTimeStamp <= currentTime) {
+                            notification
+                        } else {
+                            null
+                        }
+                    }
                 }
 
-                // Update LiveData with the fetched notifications
+                // Update LiveData with the filtered notifications
                 if (notifications.isNotEmpty()) {
                     Log.d("FetchNotification", "Fetched notifications: ${notifications.size}")
                     _userNotifications.postValue(notifications)
@@ -55,9 +68,10 @@ class NotificationViewModel : ViewModel() {
             }
             .addOnFailureListener { exception ->
                 // Handle error while fetching notifications
-                _error.postValue("Error fetching notifications: ${exception.localizedMessage}") }
-
+                _error.postValue("Error fetching notifications: ${exception.localizedMessage}")
+            }
     }
+
 
 
 

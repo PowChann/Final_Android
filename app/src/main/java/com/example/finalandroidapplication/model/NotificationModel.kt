@@ -19,5 +19,6 @@ enum class NotificationType {
     OFFERS,
     VALIDATE,
     HOUSE,
-    PARTNER
+    PARTNER,
+    APPOINTMENT
 }

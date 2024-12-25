@@ -1,5 +1,6 @@
 package com.example.finalandroidapplication.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -67,6 +68,7 @@ import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.model.RoommateItem
 import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.navigation.Routes
+import com.example.finalandroidapplication.viewmodel.ChannelViewModel
 import com.example.finalandroidapplication.viewmodel.PostViewModel
 import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -84,11 +86,10 @@ fun YourRoommate(navController: NavHostController) {
     var owner by remember { mutableStateOf<UserModel?>(null) }
     var roommatesList by remember { mutableStateOf<List<UserModel>>(emptyList()) }
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-
+    val channelViewModel : ChannelViewModel = viewModel()
     LaunchedEffect(currentUserId) {
         if (currentUserId != null) {
             try {
-                // Query Firestore to find if the current user is part of any roommate group
                 val roommatesDoc = firestore.collection("roommates")
                     .whereArrayContains("roommates", currentUserId) // Check if the user is in the roommates array
                     .get()
@@ -299,23 +300,13 @@ fun YourRoommate(navController: NavHostController) {
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
                                 ) {
-                                    // Display Owner
-                                    owner?.let { ownerUser ->
-                                        item {
-                                            RoommateItem(
-                                                roommate = ownerUser,
-                                                navHostController = navController,
-                                                isOwner = true
-                                            )
-                                        }
-                                    }
-
                                     // Display Roommates
                                     items(roommatesList.size) { index ->
+                                        val roommate = roommatesList[index]
                                         RoommateItem(
-                                            roommate = roommatesList[index],
+                                            roommate = roommate,
                                             navHostController = navController,
-                                            isOwner = false
+                                            isOwner = roommate.uid == owner?.uid // Check if the roommate UID matches the owner UID
                                         )
                                     }
 
@@ -334,17 +325,34 @@ fun YourRoommate(navController: NavHostController) {
 
                                 Button(
                                     onClick = {
-                                        navController.navigate(Routes.Messages.routes) {
-                                            popUpTo(navController.graph.startDestinationId) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
+                                        val participants = mutableListOf<String>()
+                                        for (userModel in roommatesList) {
+                                            participants.add(userModel.uid)
                                         }
+                                        channelViewModel.createChannel(
+                                            participants = participants,
+                                            onChannelExists = { channelID ->
+                                                navController.navigate("ChannelDetails/$channelID")
+                                            },
+                                            onChannelCreated = { channelID ->
+                                                navController.navigate("ChannelDetails/$channelID")
+                                            },
+                                            onError = { error ->
+                                                Toast.makeText(
+                                                    navController.context,
+                                                    "Error: $error",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        )
                                     },
+                                    enabled = roommatesList.isNotEmpty(),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 16.dp)
+                                        .padding(vertical = 16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (roommatesList.isNotEmpty()) MaterialTheme.colorScheme.primary else Color.Gray
+                                    )
                                 ) {
                                     Text(
                                         text = "Group Chat",
@@ -544,29 +552,7 @@ fun RoommateItem(
             }
         }
 
-        // Message Button
-        IconButton(
-            onClick = {
-                // Navigate to chat screen
-                val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-                val chatParticipants = listOfNotNull(currentUserId, roommate.uid).joinToString(",")
 
-                navHostController.navigate("Chat/$chatParticipants") {
-                    popUpTo(navHostController.graph.startDestinationId) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            },
-            modifier = Modifier
-                .padding(start = 8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Textsms,
-                contentDescription = "Message",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
+
     }
 }

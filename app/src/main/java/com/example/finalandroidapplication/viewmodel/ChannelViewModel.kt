@@ -65,10 +65,10 @@ class ChannelViewModel : ViewModel() {
         onChannelCreated: (String) -> Unit, // Callback khi kênh được tạo mới
         onError: (String) -> Unit // Callback khi có lỗi
     ) {
-        if (participants.isEmpty() || participants.size != 2) {
-            onError("Direct messages require exactly two participants.")
-            return
-        }
+//        if (participants.isEmpty() || participants.size != 2) {
+//            onError("Direct messages require exactly two participants.")
+//            return
+//        }
 
         // Query Firestore để kiểm tra kênh đã tồn tại
         firestore.collection("channels")
