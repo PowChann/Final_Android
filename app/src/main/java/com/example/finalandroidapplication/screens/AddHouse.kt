@@ -60,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
+import com.example.finalandroidapplication.model.InterestQueueModel
 import com.example.finalandroidapplication.viewmodel.PostViewModel
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
@@ -77,6 +78,8 @@ fun AddHouse(navController: NavHostController, uid: String) {
     var numOfPeople by remember { mutableStateOf("") }
     val selectedAmenities = remember { mutableStateListOf<String>() }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+
 
     val context = LocalContext.current
 
@@ -228,7 +231,7 @@ fun AddHouse(navController: NavHostController, uid: String) {
                 TextField(
                     value = numOfPeople,
                     onValueChange = { numOfPeople = it },
-                    label = { Text("Maximum Number of People") },
+                    label = { Text("Mimimum Number of People") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.textFieldColors(
@@ -343,6 +346,7 @@ fun AddHouse(navController: NavHostController, uid: String) {
                                     selectedAmenities.toSet(),
                                     null
                                 )
+
                                 navController.popBackStack()
                             }
                         }

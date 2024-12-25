@@ -69,6 +69,7 @@ import com.example.finalandroidapplication.model.RoommateItem
 import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.navigation.Routes
 import com.example.finalandroidapplication.viewmodel.ChannelViewModel
+import com.example.finalandroidapplication.viewmodel.HouseViewModel
 import com.example.finalandroidapplication.viewmodel.PostViewModel
 import com.example.finalandroidapplication.viewmodel.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -79,6 +80,7 @@ import kotlinx.coroutines.tasks.await
 @Composable
 fun YourRoommate(navController: NavHostController) {
     val firestore = FirebaseFirestore.getInstance()
+    var houseViewModel : HouseViewModel = viewModel()
     var showContractDialog by remember { mutableStateOf(false) }
     var contractDetails by remember { mutableStateOf<Map<String, String>?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -119,6 +121,11 @@ fun YourRoommate(navController: NavHostController) {
                 isLoading = false
             }
         }
+
+
+
+
+
     }
 
 

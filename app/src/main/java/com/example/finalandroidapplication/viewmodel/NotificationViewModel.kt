@@ -27,7 +27,7 @@ class NotificationViewModel : ViewModel() {
     private val _userNotifications = MutableLiveData<List<NotificationModel?>>()
     val userNotifications : LiveData<List<NotificationModel?>> = _userNotifications
 
-    val currentTime = System.currentTimeMillis()
+
 
     fun fetchNotificationByUid(uid: String) {
         if (uid.isBlank()) {
@@ -43,21 +43,12 @@ class NotificationViewModel : ViewModel() {
             .addOnSuccessListener { querySnapshot ->
                 Log.d("FetchNotification", "Query successful. Found ${querySnapshot.size()} notifications.")
 
-                // Filter notifications based on the triggerTimeStamp
+                // Map all notifications to NotificationModel without filtering triggerTimeStamp
                 val notifications = querySnapshot.documents.mapNotNull { document ->
-                    val notification = document.toObject(NotificationModel::class.java)
-                    notification?.let {
-                        val triggerTimeStamp = notification.triggerTimeStamp?.toLongOrNull()
-                        // Add only notifications with triggerTimeStamp <= currentTime
-                        if (triggerTimeStamp != null && triggerTimeStamp <= currentTime) {
-                            notification
-                        } else {
-                            null
-                        }
-                    }
+                    document.toObject(NotificationModel::class.java)
                 }
 
-                // Update LiveData with the filtered notifications
+                // Update LiveData with the notifications
                 if (notifications.isNotEmpty()) {
                     Log.d("FetchNotification", "Fetched notifications: ${notifications.size}")
                     _userNotifications.postValue(notifications)

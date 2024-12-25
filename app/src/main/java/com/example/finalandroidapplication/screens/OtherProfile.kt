@@ -79,6 +79,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
     val channelViewModel: ChannelViewModel = viewModel()
     val notificationViewModel : NotificationViewModel = viewModel()
 
+
     // Fetch user to view profile
     LaunchedEffect(uid) {
         firestore.collection("users").document(uid)
