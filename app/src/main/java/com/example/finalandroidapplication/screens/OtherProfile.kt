@@ -120,6 +120,7 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
+
                         Image(
                             painter = if (!user.avatarUrl.isNullOrEmpty()) {
                                 rememberAsyncImagePainter(model = user.avatarUrl)
