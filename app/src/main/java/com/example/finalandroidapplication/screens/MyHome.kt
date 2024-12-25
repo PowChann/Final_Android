@@ -42,7 +42,13 @@ fun MyHome(
                 if (userHasHouse) {
                     // User has a house
                     Button(
-                        onClick = { navController.navigate("see_my_house") },
+                        onClick = { navController.navigate(Routes.YourRoommate.routes) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        } },
                         modifier = Modifier.fillMaxWidth(0.8f).padding(8.dp)
                     ) {
                         Text("See My House")
@@ -59,14 +65,26 @@ fun MyHome(
                     Text("You don't have a house. Please publish a house or join a house.", modifier = Modifier.padding(16.dp))
 
                     Button(
-                        onClick = { navController.navigate("publish_house") },
+                        onClick = { navController.navigate(Routes.FindHouse.routes) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        } },
                         modifier = Modifier.fillMaxWidth(0.8f).padding(8.dp)
                     ) {
                         Text("Publish a House")
                     }
 
                     Button(
-                        onClick = { navController.navigate("join_house") },
+                        onClick = { navController.navigate(Routes.FindRoommate.routes) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        } },
                         modifier = Modifier.fillMaxWidth(0.8f).padding(8.dp)
                     ) {
                         Text("Join a House")

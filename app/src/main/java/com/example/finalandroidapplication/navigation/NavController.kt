@@ -98,9 +98,9 @@ fun NavGraph(navController: NavHostController) {
             val uid = backStackEntry.arguments?.getString("uid") ?: ""
             Messages(navController, uid)
         }
-//        composable(Routes.YourRoommate.routes) {
-//            YourRoommate(navController)
-//        }
+        composable(Routes.YourRoommate.routes) {
+            YourRoommate(navController)
+        }
         composable("${Routes.Profile.routes}/{uid}") { backStackEntry ->
             val uid = backStackEntry.arguments?.getString("uid") ?: ""
             Profile(navController, uid)

@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil3.compose.rememberAsyncImagePainter
 import com.example.finalandroidapplication.R
 import com.example.finalandroidapplication.model.UserModel
 import com.example.finalandroidapplication.utils.showDatePicker
@@ -54,6 +57,7 @@ import com.example.finalandroidapplication.utils.showTimePicker
 import com.example.finalandroidapplication.viewmodel.AppointmentViewModel
 import com.example.finalandroidapplication.viewmodel.ChannelViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,14 +121,19 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.baseline_person_24),
-                            contentDescription = "Profile Image",
+                            painter = if (!user.avatarUrl.isNullOrEmpty()) {
+                                rememberAsyncImagePainter(model = user.avatarUrl)
+                            } else {
+                                painterResource(id = R.drawable.baseline_person_24)
+                            },
+                            contentDescription = "Avatar",
                             modifier = Modifier
                                 .size(96.dp)
                                 .clip(CircleShape)
                                 .border(2.dp, Color.Gray, CircleShape)
                                 .background(Color.LightGray),
-                            colorFilter = ColorFilter.tint(Color.White)
+                            contentScale = ContentScale.Fit,
+                            colorFilter = if (user.avatarUrl.isNullOrEmpty()) ColorFilter.tint(Color.White) else null
                         )
                     }
 
@@ -218,20 +227,55 @@ fun OtherProfile(navController: NavHostController, uid: String) {
                     Button(
                         onClick = {
                             val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-                            if (currentUserId != null && userData.value != null) {
-                                firestore.collection("users").document(userData.value!!.uid)
-                                    .update("isRoommate", true)
-                                    .addOnSuccessListener {
-                                        Toast.makeText(
-                                            navController.context,
-                                            "Roommate status updated successfully!",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                            val roommateId = userData.value?.uid
+
+                            if (currentUserId != null && roommateId != null) {
+                                val roommatesRef = firestore.collection("roommates").document(currentUserId)
+
+                                roommatesRef.get()
+                                    .addOnSuccessListener { document ->
+                                        if (document.exists()) {
+                                            roommatesRef.update("roommates", FieldValue.arrayUnion(roommateId))
+                                                .addOnSuccessListener {
+                                                    Toast.makeText(
+                                                        navController.context,
+                                                        "Added roommate successfully!",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                                .addOnFailureListener { exception ->
+                                                    Toast.makeText(
+                                                        navController.context,
+                                                        "Failed to add roommate: ${exception.message}",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                        } else {
+                                            val data = mapOf(
+                                                "owner" to currentUserId,
+                                                "roommates" to listOf(roommateId)
+                                            )
+                                            roommatesRef.set(data)
+                                                .addOnSuccessListener {
+                                                    Toast.makeText(
+                                                        navController.context,
+                                                        "Added roommate successfully!",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                                .addOnFailureListener { exception ->
+                                                    Toast.makeText(
+                                                        navController.context,
+                                                        "Failed to add roommate: ${exception.message}",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                        }
                                     }
                                     .addOnFailureListener { exception ->
                                         Toast.makeText(
                                             navController.context,
-                                            "Failed to update roommate status: ${exception.message}",
+                                            "Failed to fetch roommates data: ${exception.message}",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
