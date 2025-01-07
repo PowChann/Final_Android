@@ -72,9 +72,7 @@ HomeSharing is a feature-rich Android application developed using Kotlin and Jet
 
 - **Community Groups:** Users can create and manage resident groups for communication and coordination.
 ## Images 
-![image](https://github.com/user-attachments/assets/1562f7f6-40aa-4476-9660-db8ff4172054)
-
-![image](https://github.com/user-attachments/assets/9921e78e-d710-4461-8791-447c3a67fd36)
+![image](https://github.com/user-attachments/assets/1562f7f6-40aa-4476-9660-db8ff4172054) ![image](https://github.com/user-attachments/assets/9921e78e-d710-4461-8791-447c3a67fd36)
 
 ![image](https://github.com/user-attachments/assets/9fd9852e-2e2f-48c4-9aa1-b42c6bfb939e)
 
