@@ -123,7 +123,7 @@ HomeSharing is a feature-rich Android application developed using Kotlin and Jet
 
 ## Usage
 
-1. **Sign up** with a phone number and verify it using OTP.
+1. **Sign up** with email
 2. **Create or update** your profile.
 3. **Search** for shared accommodations or potential roommates using filters.
 4. **Post advertisements** for available accommodations or roommate searches.
