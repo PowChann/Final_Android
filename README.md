@@ -72,27 +72,17 @@ HomeSharing is a feature-rich Android application developed using Kotlin and Jet
 
 - **Community Groups:** Users can create and manage resident groups for communication and coordination.
 ## Images 
-![image](https://github.com/user-attachments/assets/1562f7f6-40aa-4476-9660-db8ff4172054) ![image](https://github.com/user-attachments/assets/9921e78e-d710-4461-8791-447c3a67fd36)
+![image](https://github.com/user-attachments/assets/1562f7f6-40aa-4476-9660-db8ff4172054)  ![image](https://github.com/user-attachments/assets/9921e78e-d710-4461-8791-447c3a67fd36)
 
-![image](https://github.com/user-attachments/assets/9fd9852e-2e2f-48c4-9aa1-b42c6bfb939e)
+![image](https://github.com/user-attachments/assets/9fd9852e-2e2f-48c4-9aa1-b42c6bfb939e)  ![image](https://github.com/user-attachments/assets/2efde0f4-7ef3-4bcf-90ec-687ad10888de)
 
-![image](https://github.com/user-attachments/assets/2efde0f4-7ef3-4bcf-90ec-687ad10888de)
+![image](https://github.com/user-attachments/assets/75ff5840-1043-4618-85c3-eefa1ef795af)  ![image](https://github.com/user-attachments/assets/ccf52ad7-e5e1-4bef-8d03-3d1d29e3d4f8)
 
-![image](https://github.com/user-attachments/assets/75ff5840-1043-4618-85c3-eefa1ef795af)
+![image](https://github.com/user-attachments/assets/cfe43e27-019e-4c86-af10-d6764ce1263d)  ![image](https://github.com/user-attachments/assets/c73a916f-b234-4883-847e-d4d40a4ebbef)
 
-![image](https://github.com/user-attachments/assets/ccf52ad7-e5e1-4bef-8d03-3d1d29e3d4f8)
+![image](https://github.com/user-attachments/assets/33b244cb-c34d-4d22-8cdd-ef66244ed965)  ![image](https://github.com/user-attachments/assets/195a80e5-ee40-48c7-8a2e-4e3a18908c66)
 
-![image](https://github.com/user-attachments/assets/cfe43e27-019e-4c86-af10-d6764ce1263d)
-
-![image](https://github.com/user-attachments/assets/c73a916f-b234-4883-847e-d4d40a4ebbef)
-
-![image](https://github.com/user-attachments/assets/33b244cb-c34d-4d22-8cdd-ef66244ed965)
-
-![image](https://github.com/user-attachments/assets/195a80e5-ee40-48c7-8a2e-4e3a18908c66)
-
-![image](https://github.com/user-attachments/assets/8dfdc4b9-15c5-4a27-80f9-463744ca57ae)
-
-![image](https://github.com/user-attachments/assets/3b88a706-be7a-420d-b853-21b564f44102)
+![image](https://github.com/user-attachments/assets/8dfdc4b9-15c5-4a27-80f9-463744ca57ae) ![image](https://github.com/user-attachments/assets/3b88a706-be7a-420d-b853-21b564f44102)
 
 ![image](https://github.com/user-attachments/assets/a9059d69-c977-4514-ac5f-dd96dc013d55)
 
